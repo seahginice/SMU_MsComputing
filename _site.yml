@@ -1,0 +1,12 @@
+name: "SMU_MsComputing"
+title: "Building web application using R"
+description: |
+  Documentation of building web application using R
+output_dir: "_site"
+navbar:
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
+output: distill::distill_article

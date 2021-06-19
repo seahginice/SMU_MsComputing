@@ -1,0 +1,20 @@
+{
+  "articles": [
+    {
+      "path": "about.html",
+      "title": "About",
+      "description": "Documentation of building web application (dashboard) using R. This platform would also showcase my Capstone project journey for Master of Computing (Data science & engineering track) under Singapore Management University.",
+      "author": [],
+      "contents": "\n\n\n\n",
+      "last_modified": "2021-06-19T20:46:28+08:00"
+    },
+    {
+      "path": "index.html",
+      "title": "Capstone Journey",
+      "author": [],
+      "contents": "\n\n\n\n",
+      "last_modified": "2021-06-19T20:45:15+08:00"
+    }
+  ],
+  "collections": ["posts/posts.json"]
+}

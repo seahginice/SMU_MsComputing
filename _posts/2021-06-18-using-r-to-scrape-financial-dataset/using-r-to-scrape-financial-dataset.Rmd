@@ -1,0 +1,315 @@
+---
+title: "Using R to Scrape Financial Dataset"
+description: |
+  In this article we will be reviewing and discussing the various methods to perform data extraction using the common R packages.
+author:
+  - name: Ginice Seah
+    url: https://www.linkedin.com/in/giniceseah/
+    affiliation: Singapore Management University (School of Computing and Information)
+    affiliation_url: https://scis.smu.edu.sg/people/students/MScomputing/currentins
+date: 06-18-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height = 10)
+```
+
+## Introduction
+
+Data and information are easily retrieved from web pages in today’s world. Using various software and applications, the large amount of data available in the webpage environment could be easily obtained. This task is commonly performed via API, whereAPI users would be able to access the structured dataset to conduct their analysis. However, API application is not readily set up for all web applications and hence alternative methods such as web scraping is conducted to fetch the data and information.
+
+Web scraping is a common technique of reformatting the dataset from unstructured to structured formation to allow the dataset to be accessed and used. With most of the data available on the internet presented in an unstructured format (HTML format) that is not easily downloadable,pre data processing is required before it could be  used for data analysis and data modeling.
+
+Over here in this article we would be scraping dataset from various data platforms to demonstrate how data extraction is conducted as well as the strength and weakness of several R packages. We will be reviewing *rvest Quandl,quantmod and tidyquant* packages to compare and conduct literature review on these R packages.
+
+## Setting up environment
+
+We would first start with setting up the environment and installation of the packages required for web scraping using R. To ensure that we had cleared the environment to perform web scraping, we would remove prior R object using the code below
+
+```{r}
+rm(list=ls())
+```
+
+Next, we would run the following code to validate if the required packages are installed. In the event that the packages are not installed, the code will install the missing packages. Afterwhich, the code would read the required package library onto the current environment.
+
+```{r}
+packages = c('Quandl','rvest','quantmod','tidyquant','rmarkdown','tidyr','tidyverse',
+             'data.table','XML','xml2','httr','rmarkdown','knitr')
+for (p in packages) {
+  if(!require(p,character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+## rvest package
+
+After the environment had been set up, we will start by reviewing the *rvest* R package to scrape dataset from web application. *rvest* library is first published in 2014 and till now it is constantly having update to allow scraping of data from html web pages in becoming much easier. Development of  *rvest* is inspired from existing R packages such as *beautifulsoup4*. The R package is designed to work together with *magrittr* to enable the expression of the complex operations being understood in a simple format for the extraction of nodes and pieces of the HTML document where CSS Selectors are included. 
+
+In this article we will mainly be using the sample data from Yahoo Finance. Yahoo Finance is a dynamically created website, where the values of class and data-reactid are dynamically generated attributes and the data is loaded via json. With the data being populated through react.js, we are able to retrieve the data in json format from the data source from the root.app.main component.
+
+To get started there is a need for us to set up the required environment to ensure that we had the following libraries set up:
+
+*xml2 — for the reading of HTML or XML format
+*XML — for parsing XML, HTML file or string format
+*httr — for handling http requests such as GET(), PUT(), POST(), PATCH(), HEAD(), and DELETE()
+
+To start parsing through a web page, there is a need to request the data from the computer server by reading the HTML script. In the *rvest* R package, we would be using the *read_html()* function to read that page's information in R. With *read_html()* function, it will be return as a form of XML document after the data is being pull and saved as if it were a static website.
+
+The code *read_html()* will be used to query data from Yahoo Finance. We are also using *html_node()/html_nodes()*  to locate the first node that matches that selector and then we would extract its contents as text using *html_text()*. 
+
+```{r}
+symbol = 'AAPL'
+url = paste0('https://finance.yahoo.com/quote/', symbol, '/financials?p=', symbol)
+html_data = read_html(url) %>% html_node('body') %>% html_text()
+```
+
+With the code *html_node()*, we are able to convert the table that we are extracting into dataframe using *html_table()*  .Other than the above mentioned, there are other useful functions that we could used for data extraction using *rvest* package like
+
+1.*html_tag()*-To extract tag names with html_tag().
+2.*html_attr()*-To query a single attribute while *html_attrs()* query all attributes.
+3.*guess_encoding() and repair_encoding()*-Help to detect and repair text encoding problems.
+4.For navigation around the website, we would be using *html_session(), jump_to(), follow_link(), back(), and forward()* as well as *html_form(), set_values() and submit_form()* for extraction,modification and submission of form.
+
+*rvest* is a much general R packages where it allow scraping of data from any html webpage and not specific to only financial dataset. *rvest* library uses the technique of web scraping that enable us to parse the HTML content of a given URL and access the individual attribute that had been stored in the table on the page of the dataset.
+
+## Quandl package
+
+Next focus of the article would be the various common R packages, that mainly focus on the scrapping of financial data. Firstly, it will be  *Quandl* R package where it is an API Wrapper for Quandl.com. This library is published in 2019 where it is mainly used for the interaction with the Quandl API to offer data in a number of usable formats  in R. In addition, it is also downloadable as a zip file with all the required data from a Quandl database 
+
+Quandl.com is an online data warehouse that allows the query of both financial and economic data using API. Using the *Quandl* R package, we are able to retrieve the dataset of interest from the webpage using the necessary API code.
+The data that we will be querying is from the XXX. We would be using the *Quandl* function from the package to retrieve the dataset that we would like to have. In general, to be able to query a dataset from Quandl.com using the *Quandl* function, we would need to know its “Quandl code”.  For our dataset we would be using the dataset with the Quandl code “OPEC/ORB”, where the first portion of the code would be its database code (“OPEC”) that specifies where the data comes from, and the next portion of the dataset code (“ORB”) that identifies the specific time series you want.
+
+Under the *type* argument, we would indicate ‘ts’ so that the data retrieved would be in time series format. We could indicate the start and end date for the time series data that we will be extracting. This is especially useful if we   are trying to  retrieve a dataset from a particular time frame. Also under the *type* argument, we would also take into account the data frequency of the dataset to locate the specific periodicity (daily/weekly/monthly/annual/quarterly) for the time series analysis. 
+
+The following would be the code that we will be using to query the targeted dataset.
+
+```{r eval=FALSE, echo=FALSE}
+# Authorization (Set your own API key):
+Quandl.api_key("BXqNbUzC5vpJciKX9UwQ")
+```
+
+```{r}
+data = Quandl("OPEC/ORB", collapse="monthly", type="ts")
+head(data)
+```
+
+Moreover, *Quandl* is able to handle irregular spaced time series using *type* argument ‘zoo’. With this we would be able to handle the non-regular time series dataset as additional requirements like date are taken into consideration such as a 200 day moving average or volatility. The code below would display how zoo type is used for irregular spaced time series analysis.
+The following would be the code that we will be using to query the targeted dataset.
+
+```{r}
+data1 = Quandl("OPEC/ORB", type="zoo")
+head(data1)
+```
+
+Other possible variation for *type* include:
+
+*“raw” (dataframe)
+*“xts”
+*“timeSeries” (timeSeries package in the RMetrics suite)
+
+Even though, the *Quandl* R package allowed web scraping to be performed with much ease, It is rather time consuming and costly to access certain premium databases using the built-in API of the *Quandl* function.. This is due to Quandl.com not being a free open source application tool.To be able to retrieve a specific dataset, there is a need for users to purchase a premium account. Moreover, user would also need addition effort to search for the “Quandl Code” on its webpage before they are able to locate the right directory of the required dataset.
+
+## quantmod package
+
+*quantmod* R package is a tool designed to facilitate quantitative traders in the development, testing and deployment of statistically based trading models. This library is published in 2020 where it represents a quantitative financial modelling framework. This library takes into account  three main functions, data extraction,creating quantitative financial data visualization and technical indicators.
+
+Using *quantmod*, users would be to conduct a preliminary analysis for trading strategies before conducting deeper analysis.
+
+Once the *quantmod* R package environment is set up,we would run the following command to extract data from stock market share price on Yahoo Finance (OHLC data) of the default data source for data extraction. Using stock symbols as input, *quantmod* functions makes it pretty easy to load & view the share price of individual companies.
+
+```{r eval=FALSE, echo=FALSE}
+getSymbols ('AAPL')
+head(AAPL)
+```
+
+Similar to *Quandl*, if we are planning to query dataset of a selected time period, we are able to indicate and restrict the set of data to be extracted as shown
+
+```{r}
+getSymbols ('AAPL', from="2015-01-01", to="2021-06-01")
+head(AAPL)
+```
+An alternative method would be where we query the latest one year time series dataset using xts function, *last()*
+
+```{r}
+AAPL =  last(AAPL,'1 year') 
+head(AAPL)
+```
+Similarly, we are able to use the following method to query first year of the time series dataset using *first()*
+
+```{r}
+AAPL =  first(AAPL,'1 year') 
+head(AAPL)
+```
+
+Data extraction is also possible from other data sources such as Federal Reserve Bank of St. Louis FRED® (11,000 economic series),MySQL databases etc using the *src* argument of the getSymbols function as shown in the code below:
+
+```{r}
+getSymbols ('DEXJPUS',src='FRED')
+head(DEXJPUS)
+```
+When we are conducting analysis of the stock market we would likely view multiple stock prices of similar industries at once to perform comparison analysis.To perform this, we are able to assign a vector of stocks and use *getSymbols()* to retrieve the select stocks symbol.
+
+```{r}
+stocklist=c("AAPL","GOOG")
+getSymbols(stocklist)
+```
+
+The package can also be imported for non-US stocks such as the Hong Kong stock market as shown in the example below. If we would like to look at Singapore stock market, we would need to replace 'HK' with 'SI' after selecting the individual stock symbol.
+
+```{r}
+hk=getSymbols("0941.HK",src="yahoo", auto.assign=FALSE)
+head(hk)
+```
+
+Other than looking at share prices we would need to look into trading volume to understand the current demand and supply of that particular share. As compared to the *Quandl* function, *quantmod* allows us to query the total/average volume over time: weekly, monthly, quarterly and yearly. We can use the rolling sum or average of volume to each distinct period as shown in the following code.
+
+**Total trade volume**
+
+Weekly trade volume
+
+```{r}
+Weekvol = apply.weekly(Vo(AAPL),sum)
+head(Weekvol)
+```
+
+Monthly trade volume
+
+```{r}
+Mthvol = apply.monthly(Vo(AAPL),sum)
+head(Mthvol)
+```
+
+Yearly trade volume
+
+```{r}
+Yearvol = apply.yearly(Vo(AAPL),sum)
+head(Yearvol)
+```
+
+Quarterly trade volume
+
+```{r}
+Quartervol = apply.quarterly(Vo(AAPL),sum)
+head(Quartervol)
+```
+
+**Average Trade Volume**
+
+Weekly trade volume
+
+```{r}
+Weekvol = apply.weekly(Vo(AAPL),mean)
+head(Weekvol)
+```
+
+Monthly trade volume
+
+```{r}
+Mthvol = apply.monthly(Vo(AAPL),mean)
+head(Mthvol)
+```
+
+Yearly trade volume
+
+```{r}
+Yearvol = apply.yearly(Vo(AAPL),mean)
+head(Yearvol)
+```
+
+Quarterly trade volume
+
+```{r}
+Quartervol = apply.quarterly(Vo(AAPL),mean)
+head(Quartervol)
+```
+
+Additionally, there are other technical indicators and functions that we could utilized and supported in the *quantmod* library to help in data extraction.
+
+## tidyquant package
+
+Although there had been several packages designed for time series objects. Mostly of the common issue would be the difficulty to re-format the dataset into dataframe or *tidyverse* format. *tidyquant* is the latest R package design that provides a convenient wrapper to various 'xts', 'zoo', 'quantmod', 'TTR' and 'PerformanceAnalytics' package functions. The output will return objects in the tidy 'tibble' format that is ideal for time series analysis. One of the strength of the *tidyquant* R package is that it is able to use quantitative functions together with the tidyverse functions.
+
+With *tq_transmute_fun_options()*, we will be able to return a list of available functions within the *tidyquant* R packages for 'xts', 'zoo', 'quantmod', 'TTR' and 'PerformanceAnalytics' package functions.
+
+```{r eval=FALSE, echo=FALSE}
+tq_transmute_fun_options()$zoo
+tq_transmute_fun_options()$xts
+tq_transmute_fun_options()$quantmod
+tq_transmute_fun_options()$TTR
+tq_transmute_fun_options()$PerformanceAnalytics
+```
+
+Similarly to the above  R packages mentioned to extract data, we are able to indicate the start and end date for the time period required for our analysis using *tidyquant*  Moreover, 
+Users will be able to specify the start and end dates for the required period of the time series analysis. In addition to specifying the date and time, users are able to indicate the periodicity (days, weeks, months, years) required as well.
+
+Displayed in the following line of codes, users would be able to manipulate and select the individual stock symbol that they wish to query with the specific time period and data frequency from Yahoo Finance  and this is mainly using the *tq_get()* function within the *tidyquant* R packages. *tq_get()* is able to retrieve date, volume, opening, highest, lowest, closing, and adjusted price. 
+
+```{r}
+from_date = "2015-01-01"
+to_date = "2021-06-01"
+period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
+stock_selected = "AAPL" 
+
+stock_data_daily <- tq_get(stock_selected,
+               get = "stock.prices",
+               from = from_date,
+               to = to_date) %>%tq_transmute(select     = NULL, 
+               mutate_fun = to.period, 
+               period  = period_type)
+
+paged_table(stock_data_daily)
+
+```
+
+In addition, benchmark indexes could be selected based on user requirements that help time series analysis to be performed much more effectively.
+
+```{r}
+from_date = "2015-01-01"
+to_date = "2021-06-01"
+period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
+benchmark_selected = "XLK" 
+
+benchmark_data_daily <- tq_get(benchmark_selected,
+               get = "stock.prices",
+               from = from_date,
+               to = to_date) %>%tq_transmute(select  = NULL, 
+               mutate_fun = to.period, 
+               period  = period_type)
+
+paged_table(stock_data_daily)
+
+```
+
+*tq_get()* is of similar function property as the *quantmod* R packages *getSymbols()* but the data query is returned in tibble format. To look into what are the other option available for *tq_get()*, we will be using *tq_get_options()* . 
+
+In the event when we need to query dataset from Yahoo Finance not  restricted to stock price, we are able to make changes to the *get* argument within *tq_get()* to retrieve other key attributes such as ‘key.stats’,’dividends’,’stock.prices.japan’ etc. Also, using *tq_exchange()* we are able to retrieve all the names of the individual stocks that are within a given exchange. 
+
+## Conclusion
+
+Overall, this article displays how the data extraction of time series objects has become much easier and readily available as compared to the past due to the development of the various packages. From having the need to own a premium account in Quandl.com to being able to query freely from Yahoo Finance, the ease of data extraction into dataframe and right structure format have helped to facilitate the next step of time series analysis. From the review, it is noted that all these packages have their own strengths and weaknesses and based on the needs of individuals, users will be able to select and decide the package that is much suitable for the dataset that they would like to query from. 
+
+Moreover, different scenarios would required the use of different R packages. If we were to perform data extraction for financial dataset from Yahoo Finance then the three main R packages that we would look into using would be *Quandl*, *quantmod* or *tidyquant* and with *tidyquant* being the a wrapper of *quantmod* user could mainly use *tidyquant* for data extraction of financial dataset. *rvest* as mentioned earlier,it is a much generic form of parsing the data of a HTML content, where it allow us to retrieve data from IMDB to baking recipe. *rvest* does not have restriction within the function packages to query required information. 
+
+## Reference
+
+* https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/
+
+* https://blog.quandl.com/using-quandl-in-r/
+
+* https://datascienceplus.com/time-series-analysis-in-r-part-3-getting-data-from-quandl/
+
+* https://www.quantmod.com/
+
+* https://bookdown.org/kochiuyu/Technical-Analysis-with-R/downloading-data.html/
+
+* https://www.datacamp.com/community/tutorials/r-web-scraping-rvest/
+
+* https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/
+
+* https://quantdev.ssri.psu.edu/tutorials/obtaining-finance-data-tidyquant/
+

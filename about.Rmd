@@ -1,0 +1,9 @@
+---
+title: "About"
+description: |
+  Documentation of building web application (dashboard) using R. This platform would also showcase my Capstone project journey for Master of Computing (Data science & engineering track) under Singapore Management University.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
