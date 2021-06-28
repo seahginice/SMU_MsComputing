@@ -10,6 +10,8 @@ author:
 date: 06-18-2021
 output:
   distill::distill_article:
+    toc: true
+    toc_depth: 3
     self_contained: false
 ---
 
@@ -18,7 +20,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height = 10)
 ```
 
-## Introduction
+# Introduction
 
 Data and information are easily retrieved from web pages in today’s world. Using various software and applications, the large amount of data available in the webpage environment could be easily obtained. This task is commonly performed via API, whereAPI users would be able to access the structured dataset to conduct their analysis. However, API application is not readily set up for all web applications and hence alternative methods such as web scraping is conducted to fetch the data and information.
 
@@ -26,7 +28,7 @@ Web scraping is a common technique of reformatting the dataset from unstructured
 
 Over here in this article we would be scraping dataset from various data platforms to demonstrate how data extraction is conducted as well as the strength and weakness of several R packages. We will be reviewing *rvest Quandl,quantmod and tidyquant* packages to compare and conduct literature review on these R packages.
 
-## Setting up environment
+# Setting up environment
 
 We would first start with setting up the environment and installation of the packages required for web scraping using R. To ensure that we had cleared the environment to perform web scraping, we would remove prior R object using the code below
 
@@ -46,7 +48,7 @@ for (p in packages) {
   library(p,character.only = T)
 }
 ```
-## rvest package
+# rvest package
 
 After the environment had been set up, we will start by reviewing the *rvest* R package to scrape dataset from web application. *rvest* library is first published in 2014 and till now it is constantly having update to allow scraping of data from html web pages in becoming much easier. Development of  *rvest* is inspired from existing R packages such as *beautifulsoup4*. The R package is designed to work together with *magrittr* to enable the expression of the complex operations being understood in a simple format for the extraction of nodes and pieces of the HTML document where CSS Selectors are included. 
 
@@ -77,7 +79,7 @@ With the code *html_node()*, we are able to convert the table that we are extrac
 
 *rvest* is a much general R packages where it allow scraping of data from any html webpage and not specific to only financial dataset. *rvest* library uses the technique of web scraping that enable us to parse the HTML content of a given URL and access the individual attribute that had been stored in the table on the page of the dataset.
 
-## Quandl package
+# Quandl package
 
 Next focus of the article would be the various common R packages, that mainly focus on the scrapping of financial data. Firstly, it will be  *Quandl* R package where it is an API Wrapper for Quandl.com. This library is published in 2019 where it is mainly used for the interaction with the Quandl API to offer data in a number of usable formats  in R. In addition, it is also downloadable as a zip file with all the required data from a Quandl database 
 
@@ -114,7 +116,7 @@ Other possible variation for *type* include:
 
 Even though, the *Quandl* R package allowed web scraping to be performed with much ease, It is rather time consuming and costly to access certain premium databases using the built-in API of the *Quandl* function.. This is due to Quandl.com not being a free open source application tool.To be able to retrieve a specific dataset, there is a need for users to purchase a premium account. Moreover, user would also need addition effort to search for the “Quandl Code” on its webpage before they are able to locate the right directory of the required dataset.
 
-## quantmod package
+# quantmod package
 
 *quantmod* R package is a tool designed to facilitate quantitative traders in the development, testing and deployment of statistically based trading models. This library is published in 2020 where it represents a quantitative financial modelling framework. This library takes into account  three main functions, data extraction,creating quantitative financial data visualization and technical indicators.
 
@@ -230,7 +232,7 @@ head(Quartervol)
 
 Additionally, there are other technical indicators and functions that we could utilized and supported in the *quantmod* library to help in data extraction.
 
-## tidyquant package
+# tidyquant package
 
 Although there had been several packages designed for time series objects. Mostly of the common issue would be the difficulty to re-format the dataset into dataframe or *tidyverse* format. *tidyquant* is the latest R package design that provides a convenient wrapper to various 'xts', 'zoo', 'quantmod', 'TTR' and 'PerformanceAnalytics' package functions. The output will return objects in the tidy 'tibble' format that is ideal for time series analysis. One of the strength of the *tidyquant* R package is that it is able to use quantitative functions together with the tidyverse functions.
 
@@ -255,7 +257,7 @@ to_date = "2021-06-01"
 period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
 stock_selected = "AAPL" 
 
-stock_data_daily <- tq_get(stock_selected,
+stock_data_daily = tq_get(stock_selected,
                get = "stock.prices",
                from = from_date,
                to = to_date) %>%tq_transmute(select     = NULL, 
@@ -274,7 +276,7 @@ to_date = "2021-06-01"
 period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
 benchmark_selected = "XLK" 
 
-benchmark_data_daily <- tq_get(benchmark_selected,
+benchmark_data_daily = tq_get(benchmark_selected,
                get = "stock.prices",
                from = from_date,
                to = to_date) %>%tq_transmute(select  = NULL, 
@@ -289,27 +291,30 @@ paged_table(stock_data_daily)
 
 In the event when we need to query dataset from Yahoo Finance not  restricted to stock price, we are able to make changes to the *get* argument within *tq_get()* to retrieve other key attributes such as ‘key.stats’,’dividends’,’stock.prices.japan’ etc. Also, using *tq_exchange()* we are able to retrieve all the names of the individual stocks that are within a given exchange. 
 
-## Conclusion
+# Conclusion
 
 Overall, this article displays how the data extraction of time series objects has become much easier and readily available as compared to the past due to the development of the various packages. From having the need to own a premium account in Quandl.com to being able to query freely from Yahoo Finance, the ease of data extraction into dataframe and right structure format have helped to facilitate the next step of time series analysis. From the review, it is noted that all these packages have their own strengths and weaknesses and based on the needs of individuals, users will be able to select and decide the package that is much suitable for the dataset that they would like to query from. 
 
 Moreover, different scenarios would required the use of different R packages. If we were to perform data extraction for financial dataset from Yahoo Finance then the three main R packages that we would look into using would be *Quandl*, *quantmod* or *tidyquant* and with *tidyquant* being the a wrapper of *quantmod* user could mainly use *tidyquant* for data extraction of financial dataset. *rvest* as mentioned earlier,it is a much generic form of parsing the data of a HTML content, where it allow us to retrieve data from IMDB to baking recipe. *rvest* does not have restriction within the function packages to query required information. 
 
-## Reference
+# Reference
 
-* https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/
-
-* https://blog.quandl.com/using-quandl-in-r/
-
-* https://datascienceplus.com/time-series-analysis-in-r-part-3-getting-data-from-quandl/
-
-* https://www.quantmod.com/
-
-* https://bookdown.org/kochiuyu/Technical-Analysis-with-R/downloading-data.html/
-
+* https://rvest.tidyverse.org/
+* https://cran.r-project.org/web/packages/rvest/rvest.pdf
 * https://www.datacamp.com/community/tutorials/r-web-scraping-rvest/
-
 * https://blog.rstudio.com/2014/11/24/rvest-easy-web-scraping-with-r/
-
+* https://www.dataquest.io/blog/web-scraping-in-r-rvest/
+* https://crimebythenumbers.com/webscraping-with-rvest.html 
+* https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/
+* https://www.quandl.com/
+* https://cran.r-project.org/web/packages/Quandl/Quandl.pdf
+* https://blog.quandl.com/using-quandl-in-r/
+* https://datascienceplus.com/time-series-analysis-in-r-part-3-getting-data-from-quandl/
+* https://www.quantmod.com/
+* https://cran.r-project.org/web/packages/quantmod/quantmod.pdf
+* https://bookdown.org/kochiuyu/Technical-Analysis-with-R/downloading-data.html/
+* https://www.business-science.io/code-tools/2017/01/01/tidyquant-introduction.html
+* https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html
 * https://quantdev.ssri.psu.edu/tutorials/obtaining-finance-data-tidyquant/
+* https://rstudio.github.io/distill/tables.html
 
