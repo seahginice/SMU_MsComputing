@@ -16,7 +16,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =5)
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =8)
 ```
 
 # Introduction
@@ -55,8 +55,6 @@ In this article, we will be using the dataset from the *nycflights13* packages t
 The dataset is inclusive of 5 set of data points, namely airlines, airports, flights, planes and weather. Over here in this article, we will be using the weather dataset, where it contain weather related variable like temperature, humid and precipitation.
 
 ```{r}
-weather = nycflights13::weather 
-
 paged_table(weather)
 ```
 
@@ -192,7 +190,7 @@ Correlation analysis is another form of measure that we could identify within th
 
 There are several autocorrelation coefficients corresponding to each panel in the lag plot. Where r1 measure the relationship between yt and yt-1 and r2 measure the relationship between yt and yt-2 and so on.
 
-![ACF formula](images/ACF_formula.png⁩)
+![](images/ACF_formula.png)
 
 where T is length of the time series and that the autocorrelation coefficient make up the autocorrelation function (ACF). *ACF()* within the *feast* package allow us to compute ACF value as compare to its individual lag time as shown below using the weather dataset of JFK airport only. Similar technique is used for Partial autocorrelation function-*PACF()* and Cross Correlation Functions-*CCF()* as well.
 
