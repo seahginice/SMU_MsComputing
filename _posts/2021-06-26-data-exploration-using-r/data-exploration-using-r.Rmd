@@ -14,7 +14,7 @@ output:
     toc_depth: 3
     self_contained: false
     #code_download: true
-    #theme: sandstone
+    theme: sandstone
 ---
 
 
@@ -210,14 +210,15 @@ With *ggplot2* being a more general approaching for plotting figure, it is able 
 
 With the development of R packages, the combination of *tidyverse* and time series bring about the effectiveness to perform time series analysis where we look into trend, relationship as well as historical data analysis of the stock market dataset. In the next section of the article we will be looking at how enhance feature *timetk* bring out the ease for plotting time series analysis for data exploration.
 
-Below is the code chunk that display the similar graphical plot (Daily volume rate of APPL share since 2020) as mentioned above using the *gplot2* R packages. Compared to plot using *ggplot2*, the figure plotted using *timetk* allow much more interactive feature like the slider function that allow us to to filter the data observation based on the selected time period. Also, using *timetk* we are able to obtain graphical plot that allow user to hover the data point to locate the detail that user is looking out for. The various feature mentioned for *timetk* is plotted using the *plot_time_series()* function.
+Below is the code chunk that display the similar graphical plot (Daily volume rate of APPL share since 2020) as mentioned above using the *ggplot2* R packages. Compared to plot using *ggplot2*, the figure plotted using *timetk* allow much more interactive feature like the slider function that allow us to to filter the data observation based on the selected time period. Also, using *timetk* we are able to obtain graphical plot that allow user to hover the data point to locate the detail that user is looking out for. The various feature mentioned for *timetk* is plotted using the *plot_time_series()* function.
 
 ```{r}
 stock_data_daily_new %>%
   plot_time_series(date, volume, .interactive=TRUE, .plotly_slider=TRUE)
 ```
-Another important function of *timetk* would be the easiness to perform anomaly detection. Anomaly detection is where we identify data point that has unusual high/low value within the dataset. In other words, that data point is different from the rest
-In *timetk*, we are able to identify anomaly detection visualization using *plot_anomaly_diagnostics()* function and to split the dataset by year. The result of the code is shown as following where we are identifythe anomaly detection for the daily volume rate of APPL share since 2020.
+Another important function of *timetk* would be the easiness to perform anomaly detection. Anomaly detection is where we identify data point that has unusual high/low value within the dataset. In other words, that data point is different from the rest.
+
+In *timetk*, we are able to identify anomaly detection visualization using *plot_anomaly_diagnostics()* function and to split the dataset by year. The result of the code is shown as following where we are identify the anomaly detection for the daily volume rate of APPL share since 2020.
 
 ```{r}
 stock_data_daily_new %>%

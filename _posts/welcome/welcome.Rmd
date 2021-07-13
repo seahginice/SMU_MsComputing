@@ -18,6 +18,6 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Overview
+# Overview
 
 This webpage would showcase the documentation, review and analysis of the various technique and R packages in my capstone journey. In this webpage, we will be mainly looking at financial forecasting using the current common time series approach. Comprehensive literature review and usability studies will also be conducted to explore of the various possible methods for data extraction, data modeling as well as data visualization.
