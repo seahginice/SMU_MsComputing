@@ -39,7 +39,7 @@ Next, we would run the following code chunk to validate if the required packages
 
 ```{r}
 packages = c('tidyverse','tidyquant','tsibbledata','tsibble','feasts','timetk',
-             'ggplot2','stats','lubridate','data.table','rmarkdown','knitr')
+             'ggplot2','stats','lubridate','data.table','rmarkdown','knitr','nycflights13')
 for (p in packages) {
   if(!require(p,character.only = T)){
     install.packages(p)
@@ -55,7 +55,7 @@ In this article, we will be using the dataset from the *nycflights13* packages t
 The dataset is inclusive of 5 set of data points, namely airlines, airports, flights, planes and weather. Over here in this article, we will be using the weather dataset, where it contain weather related variable like temperature, humid and precipitation.
 
 ```{r}
-weather = read_csv("data/weather.csv")
+#weather = read_csv("data/weather.csv")
 
 paged_table(weather)
 ```
@@ -90,7 +90,7 @@ The following code will demonstrate how the *as_tsibble()* function from the *ts
 ```{r}
 weather_tsbl = as_tsibble(weather, key = origin, index = time_hour)
 
-paged_table(weather_tsbl)
+head(weather_tsbl)
 ```
 
 Additionally,*tsibble* is able to turn implicit missing values into explicit missing values, where we could use *fill_gaps()* to turn implicit to explicit form. The methodology of using *fill_gaps()* is shown in the code below where the *fill_gaps()* function is similar to how we had use *fill()* within *tidyr* to replace NAs based on its previous observation using time series analysis.
@@ -101,7 +101,7 @@ full_weather = weather_tsbl %>%
   group_by_key() %>% 
   tidyr::fill(temp, humid, .direction = "down")
 
-paged_table(full_weather)
+head(full_weather)
 ```
 
 Another feature of *tsibble* package would be the ability to aggregate over calendar periods demostrated in the code chunk where this could be performed using *index_by()* and *summarise()*. *index_by()* is has similar function as *group_by* where it is used to group index only while *summarise()* is the function that aggregates selected variables over time periods.
@@ -117,7 +117,7 @@ full_weather_mth_agg=full_weather %>%
     sum_precip = sum(precip, na.rm = TRUE)
   )
 
-paged_table(full_weather_mth_agg)
+head(full_weather_mth_agg)
 ```
 
 Using function such as *summarise()*, *group_by()* and *index_by()* from the *tsibble* package will help to take into account of the update of key and index respectively. Using a combination of *index_by() + summarise()* as shown in the above code can help with regularizing a tsibble of irregular time space too.
@@ -198,7 +198,8 @@ where T is length of the time series and that the autocorrelation coefficient ma
 
 ```{r}
 full_weather_acf=full_weather_2013 %>% ACF(humid, lag_max = 36)
-paged_table(full_weather_acf)
+
+head(full_weather_acf)
 ```
 The values in the acf column are r1,...,r9 where it is corresponding to the nine scatterplots in that we had plotted earlier on under lag plat section. Ploting of the ACF allow us to see how the correlations change with the lag k, where the plot is also known as correlogram.
 
@@ -255,7 +256,7 @@ full_weather_stl=full_weather %>%
   model(STL(humid ~ season(window = 5))) %>% 
   components()
 
-paged_table(full_weather_stl)
+head(full_weather_stl)
 ```
 
 Next, we will be using the *autoplot()*, *gg_season()* to plot out the time series graphic to show how each decomposed components vary within each time plot. Also, it allow us to visualise the seasonality without distractions of trend and remainder terms. The code chunk show how we are able to use *autoplot()* to plot the decomposition of the weather dataset from JFK airport into four component (trend, season_week, season_day and remainder). Similar technique is used for *gg_season* as well.
@@ -284,7 +285,7 @@ full_weather_mean=full_weather %>%
   features(humid, list(mean = mean)) %>%
   arrange(mean)
 
-paged_table(full_weather_mean)
+head(full_weather_mean)
 ```
 
 Overall, the *tidyvert* collection had been very useful in the data manipulation, feature extraction as well as the time series series. By having the dataset being easily convertible from the standard dataframe to tsibble dataframe format had allow the remaining analysis to be conducted easily with a fix structure data format.
@@ -358,7 +359,7 @@ Dataset that had been collected at times might not always be completed hence thr
 full_weather = weather %>%
   pad_by_time(time_hour, .by = "auto") 
 
-paged_table(full_weather)
+head(full_weather)
 ```
 
 ### Time series graphical visuliation
@@ -456,7 +457,7 @@ full_weather_acf_plot = full_weather_acf %>%
   mutate(Upper_critical=1.96/sqrt(8730)) %>%
   mutate(Lower_critical=-1.96/sqrt(8730))
 
-paged_table(full_weather_acf_plot)
+head(full_weather_acf_plot)
 ```
 Similar result as the *tidyvert* package is observed where the ACF plot shows that the dataset is not stationary and that it contain a seasonal pattern. The following code chunk, would display the how the ACF plot would be manually plot with the use of having line and bar plot in one figure.
 
