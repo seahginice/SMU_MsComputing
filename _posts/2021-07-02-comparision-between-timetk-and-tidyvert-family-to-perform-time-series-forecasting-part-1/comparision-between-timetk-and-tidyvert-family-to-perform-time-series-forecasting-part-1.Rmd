@@ -16,7 +16,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =8)
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =10)
 ```
 
 # Introduction
@@ -39,7 +39,7 @@ Next, we would run the following code chunk to validate if the required packages
 
 ```{r}
 packages = c('tidyverse','tidyquant','tsibbledata','tsibble','feasts','timetk',
-             'ggplot2', 'nycflights13','stats','lubridate','data.table','rmarkdown','knitr')
+             'ggplot2','stats','lubridate','data.table','rmarkdown','knitr')
 for (p in packages) {
   if(!require(p,character.only = T)){
     install.packages(p)
@@ -55,6 +55,8 @@ In this article, we will be using the dataset from the *nycflights13* packages t
 The dataset is inclusive of 5 set of data points, namely airlines, airports, flights, planes and weather. Over here in this article, we will be using the weather dataset, where it contain weather related variable like temperature, humid and precipitation.
 
 ```{r}
+weather = read_csv("data/weather.csv")
+
 paged_table(weather)
 ```
 
@@ -190,7 +192,7 @@ Correlation analysis is another form of measure that we could identify within th
 
 There are several autocorrelation coefficients corresponding to each panel in the lag plot. Where r1 measure the relationship between yt and yt-1 and r2 measure the relationship between yt and yt-2 and so on.
 
-![](images/ACF_formula.png)
+![](img/ACF_formula.png)
 
 where T is length of the time series and that the autocorrelation coefficient make up the autocorrelation function (ACF). *ACF()* within the *feast* package allow us to compute ACF value as compare to its individual lag time as shown below using the weather dataset of JFK airport only. Similar technique is used for Partial autocorrelation function-*PACF()* and Cross Correlation Functions-*CCF()* as well.
 
