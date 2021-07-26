@@ -60,7 +60,7 @@ weather = read_csv("data/weather.csv")
 paged_table(weather)
 ```
 
-# Tidyvert Collection
+# Tidyvert Collection 
 
 The *tidyvert* collection is adapted from the popular *forecast* R package that is widely used in the past for time series forecasting using various classic time series model. The R *forecast* R packages provides different methods and tools for display and analysing of time series forecasts including exponential smoothing via state space models and automatic ARIMA modelling. 
 
@@ -148,7 +148,7 @@ With the *feasts* package, user is able to plot time plot based on the given tim
 
 ```{r}
 full_weather %>%
-   gg_season(humid)+
+   gg_season(humid,color='#000083', size=0.3)+
   labs(title = "Humidity level of hourly meterological data",
        subtitle = "Individual time plot for for LGA, JFK and EWR airport dataset",
        y = "Humidity level")
