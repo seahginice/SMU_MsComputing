@@ -1,0 +1,50 @@
+---
+title: "Storyboard"
+description: |
+  Journey in the development of my storyboard for the design of the web application via Shiny application
+author: 
+  - name: Ginice Seah
+    url: https://www.linkedin.com/in/giniceseah/
+date: 07-31-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =5)
+```
+
+# Introduction
+
+Stock market is full of uncertainty and high level of volatiity due to demand and supply from current market. As such, forecasting for stock price very crucial and important in finance and business industry. For stockbrokers/trader, understanding trends and seasonality with the support of the prediction forecasting is very important for decision making. 
+
+Hence, to be able to be equipped with these prediction functionality, there is a need for user to be able to visualize reall time stock prices with forecasting ability on on user-interface (UI) that allow user to be able to toggle with the dashboard to manipulate the dataset that requirement with build in ability for time series forecasting. In this article we will be proposing a time series forecasting web application that is build via Shiny application that have interactive features to allow user to cut and slices dataset based on their needs and requirement.
+
+# Motivation
+
+Traditional trading company have been looking into the integration use of combine Machine Learning together with the traditional trade prediction software application that they been using for years. Reason for the shift is not only due to rise in usage of Artificial Intelligent (AI) and machines learning but more on the integrated use of machine learning and traditional time series forecasting model to help in the optimization of the decision-making process that is perform by human when predicting stock prices.
+
+With the use of a dashboard, user would be able to conduct their forecasting effectively together with real time dataset.Based on these build in predictions function, user can be more focus in taking timely actions to maximize their returns. Trading is often greatly influenced by human emotions, that might be a stumbling block to achieve optimal performance. Algorithms and web application make decisions much faster than user without the influence of external factors like emotions.
+
+# Methodology
+
+To archive a real time prediction dashboard that allow user to be interactive based on their stock preference and selected time period. We would need to review and analysis it at two aspect:
+
+* The first aspect would be data integration to data modeling and finally data visulization. We would first need to perform data transformation for the dataset that we will be query via Yahoo Finance using *tidyquant* R packages. After which, we will be perform data modeling and lastly it will be data visualization that will be display on the dashboard.
+
+* The second aspect would be the usability testing to allow the dashboard to be clear and useful to use for user. And this article we will be looking at the design of the storyboard for the stock price forecasting web application. Storyboard is usually use pior in the building of dashboard application, it allow user to have clear perspective to look at three major questions as below that allow dashboard to be build that suit user overall experience.
+
+1. What am I measuring?
+2. Who is it for?
+3. When and how are we looking at it?
+
+Having an end goal in mind when building the dashboard application allow us to be able to understand and cater to user needs and persective. This would overall boost the result of our usabilty evaluation after the intial draft of the dashboard application had been build.
+
+# Storyboard
+
+# Reference
+
+* https://www.r-bloggers.com/2018/04/using-shiny-dashboards-for-financial-analysis/
+* https://towardsdatascience.com/how-to-use-r-shiny-for-eda-and-prediction-72e6ef842240

@@ -4,9 +4,27 @@ description: |
   Documentation of building web application using R
 output_dir: "_site"
 navbar:
+  search: false
   right:
     - text: "Home"
       href: index.html
     - text: "About"
       href: about.html
+    - text: "Post"
+      menu:
+        - text: "Scraping of Real time Financial dataset"
+          href: 2021-06-18-scraping-of-financial-dataset/using-r-to-scrape-financial-dataset.html
+        - text: "Data Exploration"
+          href: 2021-06-21-data-exploration/data-exploration-using-r.html
 output: distill::distill_article
+collections:
+  posts:
+    categories: false
+    categories_metadata: false
+    authors_metadata: false
+    feed_items_max: 50
+rss:
+  full_content: true
+  categories:
+    -forecasting
+    -UI design

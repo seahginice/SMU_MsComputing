@@ -1,0 +1,421 @@
+---
+title: "Comparision between timetk and tidyvert family-Part 3"
+description: |
+  Showcase and reviewing the different tools and technique within the tidyvert and timetk collection that allow user to be able to perform time series forecasting
+author:
+  - name: Ginice Seah
+    url: https://www.linkedin.com/in/giniceseah/
+date: 07-20-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =5)
+```
+
+# Introduction
+
+A time series is usually modeled with a stochastic process Y(t) where it is a sequence of random variables. In the time series forecasting setting we find ourselves being at time t and we are interested in estimating Y(t+h) that is occuring at future time, using only information available at time t as well as historical dataset.
+
+As such time series forecasting is a process to predict the future with the help of history data. The assumption of time series forecasting is that the information will repeat itself in near future. The core intention of this article is where we will be exploring and reviewing the **timetk** and **tidyvert** family R packages of its forecasting technique as compared to previous two post which mainly focus on data transformation and feature engineering. 
+
+The objective of the article will be at be conducting an overall comparison analysis to look at how the different collection work for time series forecasting using the targeted dataset.
+
+# Setting up environment
+
+We would first start with setting up the environment and installation of the packages required for time series forecasting using R. To ensure that we had cleared the environment to perform data manipulation, we would remove prior R object using the code below
+
+```{r}
+rm(list=ls())
+```
+
+Next, we would run the following code chunk to validate if the required packages are installed. In the event that the packages are not installed, the code will install the missing packages. Afterwhich, the code would read the required package library onto the current environment.
+
+```{r}
+packages = c('dplyr','tidyquant','tidyverse','tsibble','feasts','forecast','fable'
+             ,'tsibbletalk','tidymodels','earth'
+             ,'stats','lubridate','data.table','ggplot2','plotly'
+             ,'rmarkdown','knitr','devtools','tseries')
+for (p in packages) {
+  if(!require(p,character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+# Import dataset
+
+In this article, we will be using the selected Asia Pacific airline stock price extracted from Yahoo Finance. Dataset extraction is conducted using the *tidyquant* R packages. *Tidyquant* provides a function *tq_get()* for directly loading data as mentioned in the previous article[insert link]. We will be query daily data for Singapore airline, Cathay pacific, Eva air, Japan airline and Garuda Indonesia airline stocks from year 2020 to 15 July 2021 and following will be the code chunk to perform data extraction togther with the data visulization of it.
+
+Reason for selecting that particular time period is to explore how the coronavirus pandemic had impacted the share prices of the Asia Pacific aviation sector and to look into performing a time series forecasting of the selected airline stock. Also, the aim of the article is to identify if there is any trend/seasonality pattern in the selected airline share prices together with the comparison of the *tidyvert* and *timetk* collection.
+
+```{r}
+from_date = "2020-01-01"
+to_date = "2021-07-15"
+period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
+stock_selected = c("C6L.SI","0293.HK","2618.TW","JAPSY","GIAA.JK")
+
+stock_data_daily = tq_get(stock_selected,
+               get = "stock.prices",
+               from = from_date,
+               to = to_date)%>%
+  mutate_if(is.numeric, round, digits = 2)%>%
+  distinct(symbol,date,adjusted, .keep_all = TRUE)
+
+paged_table(stock_data_daily)
+```
+
+Note that the data had been transformed so that each stock begins at 100 and replot where it had been standardize to allow comparasion among the different asia pacific stock adjusted prices timeseries.
+
+```{r}
+stock_data_daily %>%
+  group_by(symbol) %>%
+  mutate(adjusted_edit = 100*adjusted/first(adjusted)) %>%
+  ggplot(aes(x = date, y = adjusted_edit, color=symbol)) +
+  geom_line(size = 1)+
+  labs(title = "Normalized adjusted stock prices of the selected Asia pacific airline") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 35, color = '#333333')
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        ) +
+    theme_tq() + 
+    scale_color_tq()
+
+```
+
+# tidyvert collection
+
+The *tidyvert* collection as mention in this post [insert link] is adapted from the popular *forecast* R package that is widely used in the past for time series forecasting using various classic time series model. The core intention of the development of the *tidyvert* collection is for the replacement of the very popular *forecast* package. 
+
+## *forecast* package
+
+*forecast* R package and *fable* packages both contain functions and tools that could be used to display and analyse univariate time series forecasts such as exponential smoothing via state space models and automatic ARIMA modelling. *forecast* R package is the traditional package used for time series forecasting and in the next section. We will be reviewing the available tools and function for time series forecasting using *forecast* package
+
+To begin, time series forecasting there is is need for our dataset to be in the time series structure. In *forecast* package there is the *ts()* function used that convert data into time series object. The following code show how we are able to transform the stock price dataset into time series object.
+
+```{r}
+stock_data_daily_SQ=filter(stock_data_daily,symbol=='C6L.SI')
+stock_data_daily_SQ_ts = ts(data=stock_data_daily_SQ$adjusted) 
+
+plot.ts(stock_data_daily_SQ_ts, plot.type=("single"), ylab = expression(paste("Adjusted Singapore Airline Stock Price")))
+```
+
+Afterwhich there is need for user to perform a quick analysis to look out for any under lying patterns such as stationary, non-stationary, seasonlity and trend.  *adf.test()/kpss.test()* functions is use to identify if the time series dataset is staionary.non-stationary using the Unit Root Tests – augmented Dickey–Fuller test (ADF) or Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test respectively.
+
+* ADF: The null-hypothesis for an ADF test is that the data are non-stationary. So large p-values are indicative of non-stationarity, and small p-values suggest stationarity. Using the usual 5% threshold, differencing is required if the p-value is greater than 0.05.
+
+* KPSS: Another popular unit root test is the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test. This reverses the hypotheses, so the null-hypothesis is that the data are stationary. In this case, small p-values (e.g., less than 0.05) suggest that differencing is required.
+
+Based on the unit test performed earlier, we are able to use *ndiffs()*/*diff()* functions that allow us to find the number of times differencing needed for the data and to difference the data respectively. This is only applicable when the data is stationary and it allow us to select the right ARIMA model for forecasting. 
+
+The first differencing will remove a linear trend (differences = 1) while the twice-differencing will remove a quadratic trend (differences = 2). First-differencing a time series at a lag equal to the period will remove a seasonal trend as well. And over here we be using difference=2 as from the graph above it suggest a nonlinear pattern in the Singapore airline share prices over time
+
+```{r}
+## Twice-difference the SQ stock data
+stock_data_daily_SQ_ds = diff(stock_data_daily_SQ_ts, differences = 2)
+## Plot the differenced data
+plot(stock_data_daily_SQ_ds, ylab = expression(paste("Differenced data for Singapore airline share prices")))
+```
+
+And finally for forecasting stationary time series data we need to choose an optimal ARIMA model (p,d,q). For this we can use *auto.arima()* function in the *forecast* package which auto select the p,d and q variable required.  *forecast()* function then use to forecast how the future events be like based on historical data points.
+
+```{r}
+stock_data_daily_SQ_arima=auto.arima(stock_data_daily_SQ_ts)
+
+stock_data_daily_SQ_arima
+```
+
+```{r}
+plot(forecast(stock_data_daily_SQ_arima))
+```
+
+## fable
+
+After we reviewed and explored of the *forecast* package that we had used traditionally for time series forcasting. Next we will be looking into the *fable* package under the *tidyvert* collection, where the main data structure of the dataset used would be in tsibble as shown in the post here [insert part 1 link].
+
+The R package *fable* provides a set of tools and functions that uses univariate and multivariate time series forecasting models (exponential smoothing via state space models, automatic ARIMA modelling). *fable* packages utilizes the technique of performing tidy forecasting models. These models work within the fable framework that could be evaluate, visualise and combine with time series forecasting models in a consistent workflow within the *tidyverse* collections.
+
+### Forecasting a single time series
+
+Even though the *fable* R package is designed to be able to handle mutiple time series, we will start by using the *autoplot()* function within the *fable* package to plot a single time series.
+
+The following code chunk will demonstrated how we are going to plot out the single times series of Singapore Airline adjusted share price. From the figure below, we are able to observe a sharp decrease in price during February 2020 to March 2020 period where the coronavirus pandemic affect the aviation industry the most. After which, the prices starts to have a slowly increase in price at the end of December 2020 where the coronavirus pandemic started to become more stable and where the coronavirus vaccination started to roll out globally.
+
+
+```{r}
+#Filtering of Singapore airline stocks
+Sq_stock = stock_data_daily %>%
+  filter(
+    symbol == 'C6L.SI',
+    volume > 0
+  )
+#Convert data frame to tsibble format
+Sq_stock = Sq_stock %>% as_tsibble()
+
+#Convert time series format
+Sq_stock_ts = Sq_stock %>% ts(Sq_stock[, 2:8],  
+                    start = c(2020, 1),  
+                    end = c(2021, 2),    
+                    frequency = 360)
+
+#Plotting of the single time series
+Sq_stock %>% autoplot(adjusted, color='#630000', size=1)+
+  labs(x="Time period", y = "$Adjusted Price", 
+       subtitle = "1 Jan 2020 to 15 July 2021",
+       title = "Adjusted price for Singapore airline share price against time") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 30, color = '#333333')
+        ,plot.subtitle = element_text(size = 18)
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        )
+```
+
+As mentioned earlier [insert link of part 1], we are able to use *gg_tsdisplay()* function within the *feasts* package allow the user to plot a time series along with its ACF and PACF for us to identify its p,q,d value for the ARIMA model.
+
+The following code below would demonstrated how it is used and over here in our composite plot, we had selected the *plot_type='partial'* to generate the ACF and PACF plot in the following diagram.
+
+```{r}
+Sq_stock = Sq_stock %>%
+  fill_gaps() %>% 
+  group_by_key() %>% 
+  tidyr::fill(open, high, low, volume, adjusted, .direction = "down")
+
+Sq_stock %>%
+  gg_tsdisplay(difference(adjusted), plot_type='partial')
+```
+From the composite plot above, the ACF plot suggest an MA(1) model, it might indicate that it will be ARIMA(0,1,1).
+
+After checking and validating that the time series is stationary, we would fit the ARIMA(0,1,1) as well as two automated model where one is using default function and the other one in a search of larger model space.
+
+For the Singapore airline adjusted share price data set, a reasonable benchmark forecast method is the seasonal naive method, where forecasts are set to be equal to the last observed value from the same quarter. Alternative models for this series are ETS and ARIMA models. All these can be included in a single call to the model() function like this.
+
+```{r}
+Sq_stock = Sq_stock %>% drop_na()
+
+Sq_stock_fit = Sq_stock %>%
+  model(arima011 = ARIMA(adjusted ~ pdq(0,1,1)),
+        auto = ARIMA(adjusted),
+        search = ARIMA(adjusted, stepwise=FALSE))
+
+#glance(Sq_stock_fit) %>% arrange(AICc) %>% select(.model:BIC)
+```
+Other than having the forecast value in a table we are also able to plot out the forecast graphical visualization as well. Using the same *autoplot()* function, we are able to forecast
+the future observation using *forcast()* from the historical data points.
+
+```{r eval=FALSE,echo=TRUE}
+Sq_stock_fit %>%
+  forecast(h=5) %>%
+  filter(.model=='auto') %>%
+  autoplot(adjusted, level=NULL)+
+  labs(x="Time period", y = "$Adjusted Price", 
+       subtitle = "1 Jan 2020 to 15 July 2021",
+       title = "Forecast of adjusted price for Singapore airline share price against time") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 30, color = '#333333')
+        ,plot.subtitle = element_text(size = 18)
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        ) +
+  guides(colour = guide_legend(title = "Forecast"))
+```
+
+
+### Forecasting mutiple time series
+
+Other than forecasting in a single time series, we are also able to use the *autoplot()* functions within the *fables* package to plot out a mutiple time series as shonw in the code below.
+
+```{r}
+#Convert dataframe to tsibble format
+stock_data_daily_tsb = stock_data_daily %>% as_tsibble(key = symbol, index = date)
+
+#Plotting of the single time series
+stock_data_daily_tsb %>% 
+  group_by(symbol) %>%
+  mutate(adjusted_edit = 100*adjusted/first(adjusted)) %>%
+  autoplot(adjusted_edit, size=1)+
+  labs(x="Time period", y = "$Adjusted Price", 
+       subtitle = "1 Jan 2020 to 15 July 2021",
+       title = "Adjusted price for the selected Asia Pacific airline share price against time") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 30, color = '#333333')
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        )
+
+```
+
+Usually a dataset could have multiple time series and for this would be using *filter()*, *select()* and *report()* functions to filter out the different share price for our time series analysis. In the code chunk below we are able to see that with the use of the *report()*, we are able to restructure the time series model into a much easier to read format.
+
+```{r eval=FALSE,echo=TRUE}
+fit = Sq_stock %>%
+  model(
+    arima011 = ARIMA(adjusted ~ pdq(0,1,1)),
+    auto = ARIMA(adjusted),
+    search = ARIMA(adjusted, stepwise=FALSE),
+  )
+
+fit %>%
+  select(auto) %>%
+  report()
+```
+
+Similarly, we are able to use the *forecast()* function within the *fable* packages to compute the forecast of every model and key combination. And from the code below, we will be performing a time series forecasting for 5 years.
+
+As we would using natural language to specify the forecast horizon. The *forecast()* function has the ability to interpret many different time specifications. For example if we would like to forecast for quarterly data, we are able to set h = "3 years" where it is equivalent to setting h = 12.
+
+```{r eval=FALSE,echo=TRUE}
+fit_forcast = fit %>%
+  forecast(h = "5 years")
+
+paged_table(fit_forcast)
+```
+Plots of individual forecasts model can also be plotted using the following code, filtering is a relatively useful tool to avoid plotting too many series in a single plot.
+
+```{r eval=FALSE,echo=TRUE}
+fit_forcast %>%
+  autoplot(adjusted, level = NULL) +
+  labs(x="Time period", y = "$Adjusted Price", 
+       subtitle = "1 Jan 2020 to 15 July 2021",
+       title = "Forecast of adjusted price for Singapore airline share price against time") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 30, color = '#333333')
+        ,plot.subtitle = element_text(size = 18)
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        ) +
+  guides(colour = guide_legend(title = "Forecast"))
+```
+
+### Forecast accuracy calculations
+
+To validate and compare the forecast accuracy of the forecast models used above, we will create a training data set containing all data up to 15 June 2021. After which we will then forecast the remaining years in the data set and compare the results with the actual values.
+
+```{r eval=FALSE,echo=TRUE}
+train = Sq_stock %>%
+  filter(date <= 2021-06-15)
+
+fit = train %>%
+  model(
+    arima011 = ARIMA(adjusted ~ pdq(0,1,1)),
+    auto = ARIMA(adjusted),
+    search = ARIMA(adjusted, stepwise=FALSE),
+  ) %>%
+  mutate(mixed = (arima011 + auto + search) / 3)
+```
+
+In this article we will have a try of using an ensemble forecast (mixed) where it is an average of the three fitted models. Do note that *forecast()* tend to produce distributional forecasts from the ensemble as well, taking into account the correlations between the forecast errors of the component models.
+
+```{r eval=FALSE,echo=TRUE}
+fit_forcast = fit %>% forecast(h = "5 years")
+fit_forcast %>%
+  autoplot(adjusted, level = NULL)
+```
+
+After performing our forecast we will be using *accuracy()* function to check on our accuracy level. By default it computes several point forecasting accuracy measures such as MAE, RMSE, MAPE and MASE for every key combination.
+
+```{r eval=FALSE,echo=TRUE}
+accuracy(fit_forcast, adjusted)
+```
+
+As we had generated a distributional forecasts using ensemble forest, it will also be interesting to look at the accuracy using CRPS (Continuous Rank Probability Scores) and Winkler Scores (for 95% prediction intervals).
+
+```{r eval=FALSE,echo=TRUE}
+fit_accuracy = accuracy(fit_forcast, adjusted,
+  measures = list(
+    point_accuracy_measures,
+    interval_accuracy_measures,
+    distribution_accuracy_measures
+  )
+)
+fit_accuracy %>%
+  group_by(.model) %>%
+  summarise(
+    RMSE = mean(RMSE),
+    MAE = mean(MAE),
+    MASE = mean(MASE),
+    Winkler = mean(winkler),
+    CRPS = mean(CRPS)
+  ) %>%
+  arrange(RMSE)
+```
+
+## tsibbletalk 
+
+*tsibbletalk* package is a new created R package that mainly use in the creation of interactive graphics for Tsibble object. Having the interactive feature allow user to be able to perform their analysis after time series forecasting much effectively. Additionally, have the interactive features enable user to be much more engaage and help to build connection between actual business concept and result much easily.
+
+The backend theory of *tsibbletalk* is where a shared tsibble data easily communicates between
+html widgets via client and server that is powered by 'crosstalk'. Shiny module is used to visually explore periodic/a periodic temporal patterns.
+
+To begin there is a need for us to transform the current tsibble data format into a shared tsibble format using the *as_shared_tsibble()* function within the *tsibbletalk* package. If there is any nesting/hierarchical structure in the key variable, we are able to use the *spec argument* to supply the structural specification. Moreover, we are able to use the *plotly_key_tree()* to visualises the tree structure specified in the spec
+
+```{r eval=FALSE,echo=TRUE}
+shared_Sq_stock = as_shared_tsibble(Sq_stock, spec=adjusted/volume)
+
+p0 = plotly_key_tree(shared_Sq_stock, height = 600, width = 300)
+
+Sq_stock_feat = shared_Sq_stock %>%
+  features(adjusted, feat_stl)
+
+p1 = shared_Sq_stock %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line(aes(group = symbol), alpha = 0.5) +
+  facet_wrap(~ adjusted, scales = "free_y")
+p2 = Sq_stock_feat %>%
+  ggplot(aes(x = volume, y = adjusted)) #+
+  #geom_point(aes(group = symbol))
+
+subplot(p0,
+  subplot(
+    ggplotly(p1, tooltip = "symbol" ,width = 900),
+    ggplotly(p2, width = 900),
+    nrows = 2),
+  widths = c(.4, .6)) %>%
+  highlight(dynamic = FALSE)
+```
+
+Overall, using the *fable* package we are able to forecast our Stock market adjusted prices easily and with the feasibility to allow to perform a comparsison in the typical time series model forecast like ARIMA, trend, exponentially smoothing model. This is further show where without the need to find out the p,d,q using the ACF and PACF plot, user would be able to generate the right ARIMA model for their dataset just by using the *ARIMA()* function within the *fable* packages.
+
+Moreover, with the newly introduction of *tsibbletalk* package, user is able to create a much interactive graphical plots that allow them to slide and dice the dataset with much graphical interaction ability just like how interactive feature are one of the main highlight of the *timetk* collection.
+
+# Conclusion
+
+Overall, *fable* package within the *tidyverse* collection is very much design for the tsibble object structure as per how the entire *tidyverse* collection is structure to allow the time series forecasting model generated to be more of a tsibble objects.
+
+An advantage of the *fable* package is the ability to handle and fit several model at once for a single time series. This reduce alot of time required to re-code the time series forecasting models that user would like to test. Also in *fable*, we are able obtain prediction intervals from the forecast object using *hilo()* and plots using autoplot() provides a more consistent interface with every model specified as a formula.
+
+In the event where user would like to generate a much more interactive graphical plot, user is able to do so with the use of *tsibbletalk* package that was new created in 2020, it uses the combination of ggplot2 and plotly to allow tssible data format to be much more interactive and engaging for users as compared to the *autoplot()* from *fable* package within the *tidyverse* collection.
+
+# Reference
+
+* Athiyarath, S., Paul, M., &amp; Krishnaswamy, S. (2020). A Comparative Study and Analysis of Time Series Forecasting Techniques. SN Computer Science, 1(3). https://doi.org/10.1007/s42979-020-00180-5 
+* Burba, D. (2020, November 24). An overview of time series forecasting models. Medium. https://towardsdatascience.com/an-overview-of-time-series-forecasting-models-a2fa7a358fcb. 
+* Business-Science.io. (2017, October 24). Demo Week: Time Series Machine Learning with timetk. * Business Science. https://www.business-science.io/code-tools/2017/10/24/demo_week_timetk.html. 
+* Business-Science.io. (2020, June 29). Introducing Modeltime: Tidy Time Series Forecasting using Tidymodels. Business Science. https://www.business-science.io/code-tools/2020/06/29/introducing-modeltime.html. 
+* Comprehensive R Archive Network (CRAN). (2020, October 2). Interactive Graphics for Tsibble Objects [R package tsibbletalk version 0.1.0]. The Comprehensive R Archive Network. https://cran.r-project.org/web/packages/tsibbletalk/index.html. 
+* Dancho, M. (2017, July 25). Forecasting Using a Time Series Signature with timetk. http://cran.nexr.com/web/packages/timetk/vignettes/TK03_Forecasting_Using_Time_Series_Signature.html. 
+* Dingli, A., &amp; Fournier, K. S. (2017). Financial Time Series Forecasting – A Deep Learning Approach. International Journal of Machine Learning and Computing, 7(5), 118–122. https://doi.org/10.18178/ijmlc.2017.7.5.632 
+* Drop rows containing missing values - drop_na. - drop_na • tidyr. (n.d.). https://tidyr.tidyverse.org/reference/drop_na.html. 
+* E. E. Holmes, M. D. S. (2021, March 1). Applied Time Series Analysis for Fisheries and Environmental Sciences. 4.1 Time series plots. https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-time-series-plots.html. 
+* E. E. Holmes, M. D. S. (2021, March 1). Applied Time Series Analysis for Fisheries and Environmental Sciences. 4.9 Autoregressive moving-average (ARMA) models. https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-autoregressive-moving-average-arma-models.html. 
+* Forecasting Models for Tidy Time Series. Forecasting Models for Tidy Time Series •. (n.d.). https://fable.tidyverts.org/. 
+* Forecasting: Principles&nbsp;and&nbsp;Practice (3rd ed). 5.2 Some simple forecasting methods. (n.d.). https://otexts.com/fpp3/simple-methods.html. 
+* Gorakala, suresh kumar. (2015, December 26). Time Series Analysis using R – forecast package: R-bloggers. R. https://www.r-bloggers.com/2014/04/time-series-analysis-using-r-forecast-package/. 
+* Guerard, J. B. (2012). An Introduction to Time Series Modeling and Forecasting. Introduction to Financial Forecasting in Investment Analysis, 47–72. https://doi.org/10.1007/978-1-4614-5239-3_3 
+* Hyndman, R. on R. J. (2019, September 29). Tidy forecasting in R: R-bloggers. R. https://www.r-bloggers.com/2019/09/tidy-forecasting-in-r/. 
+* Lesson 1 Welcome to Shiny. Shiny. (n.d.). https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/. 
+* McLeod, A. I., Yu, H., &amp; Mahdi, E. (2012). Time Series Analysis with R. Time Series Analysis: Methods and Applications, 661–712. https://doi.org/10.1016/b978-0-444-53858-1.00023-5 
+* plot.ts: Plotting Time-Series Objects. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/plot.ts. 
+* plot: Generic X-Y Plotting. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/plot. 
+* Science, B. (2020, August 19). Time Series in 5-Minutes, Part 1: Data Wrangling and Rolling * Calculations: R-bloggers. R. https://www.r-bloggers.com/2020/08/time-series-in-5-minutes-part-1-data-wrangling-and-rolling-calculations/. 
+* Science, B. (2020, November 24). Forecasting Time Series ARIMA Models (10 Must-Know Tidyverse Functions #5): R-bloggers. R. https://www.r-bloggers.com/2020/11/forecasting-time-series-arima-models-10-must-know-tidyverse-functions-5/. 
+* The Tidymodels Extension for Time Series Modeling. The Tidymodels Extension for Time Series Modeling •. (n.d.). https://business-science.github.io/modeltime/. 
+* Time Series Machine Learning. • timetk. (n.d.). https://business-science.github.io/timetk/articles/TK03_Forecasting_Using_Time_Series_Signature.html. 
+* TrenchForecast: Minimum Mean Square Forecast. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/ltsa/versions/1.4.6/topics/TrenchForecast. 
+* tsibbletalk. README. (n.d.). https://cran.r-project.org/web/packages/tsibbletalk/readme/README.html. 
+* Zach Bogart, J. R. (2021, March 27). edav.info/. 21 Stock data with tidyquant. https://edav.info/tidyquant.html. 

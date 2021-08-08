@@ -1,0 +1,264 @@
+---
+title: "Data exploration"
+description: |
+  In this article we will be reviewing and discussing the Tidyverse and timetk collection to perform data transformationa and data exploration.
+author:
+  - name: Ginice Seah
+    url: https://www.linkedin.com/in/giniceseah/
+date: 06-21-2021
+output:
+  distill::distill_article:
+  #html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    self_contained: false
+    #code_download: true
+    theme: sandstone
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =5)
+```
+
+# Introduction
+
+After querying dataset using web scraping, there is a need for us to performed data transformation to translate the raw dataset into a tibbles or structural dataframe format. Through data transformation, we will be cleaning and wrangling the dataset through the standardization of the dataset, removal of missing value and outlier as well as the filtering of large value. 
+
+In this article, the first section of would be on data transformation where we would be reviewing and using **tidyverse** collection of R packages. The second section of the article would be on data exploration. With the ready dataset we will start looking into data exploration using **ggplot2** and **timetk** to perform data analysis and data visualization.
+
+# Setting up environment
+
+We would first start with setting up the environment and installation of the packages required for data transformation using R. To ensure that we had cleared the environment to perform data cleaning and wrangling, we would remove prior R object using the code below
+
+```{r}
+rm(list=ls())
+```
+
+Next, we would run the following code chunk to validate if the required packages are installed. In the event that the packages are not installed, the code will install the missing packages. Afterwhich, the code would read the required package library onto the current environment.
+
+```{r}
+packages = c('devtools','tidyverse','tidyquant','timetk','data.table','rmarkdown','knitr')
+for (p in packages) {
+  if(!require(p,character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+# Import dataset
+
+In this article, we will be using the dataset extracted from Yahoo Finance using *tidyquant* R packages. *Tidyquant* provides a function *tq_get()* for directly loading data as mentioned in the previous article. For the purpose of this article, we will be query daily data for APPLE stocks from year 2015 to 2021 and following will be the code chunk to perform data extraction.
+
+```{r}
+from_date = "2015-01-01"
+to_date = "2021-06-01"
+period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
+stock_selected = "AAPL" 
+
+stock_data_daily = tq_get(stock_selected,
+               get = "stock.prices",
+               from = from_date,
+               to = to_date) %>%tq_transmute(select = NULL, 
+               mutate_fun = to.period, 
+               period  = period_type)
+
+paged_table(stock_data_daily)
+```
+# Data Transformation
+
+# Tidyverse
+
+**Tidyverse** is an opinionated collection of R packages designed for data science. The suit of integrated packages that is under the *tidyverse* collection share an underlying design philosophy, grammar, and data structures. This would implies that *tidyverse* is a rather modular where it allow individual packages to be developed and work individually and at the same time it is possible for the set of packages to work in harmony as well due to the share common data representation representation and API design. 
+
+*Tidyverse* was created by Hadley Wickham and his team with the objective to provide all the required utilities to clean and work with data. In this article, we will be review some of the R packages that is within the *tidyverse* collection that is useful for data management, data manipulation as well as data visualization that would be useful in the process for both data transformation and data exploration.
+
+A main component of the *tidyverse* collection would be the requirement of tibble dataframe. Tibbles is a rework of the standard dataframe where there is some internal improvements that increase the code reliability. Moreover, tibbles dataframe allow more variability as compare to the usual dataframe. For example, tibbles allow symbols to be included in column names.
+
+**Comparison between traditional R dataframe vs tibbles dataframe**
+Tidyverse uses the *tibbles* instead of traditional R dataframe. This is due to tibbles dataframe having the property to tweak some older behaviours that allow data cleaning to be much more manageable. R application had been around since early 1990 and some features that was useful in the past had been difficult to manage. It had been rather troublesome to change base in R without breaking existing code causing the creation of innovative packages to be tedious. Whereas using *tibble*, it is able to provide opinionated data frames that make working with tidyverse package much easier.
+
+## Data Management using Tidyverse collection
+
+### readr
+The *readr* package is another method to read data (example: csv,tsv,fwf) in R that also help to solves the problem of parsing a flat file into a tibble formate. This allow an improvement over the traditional file importing methods and help to improve the computation speed as well. Also, *readr* helps in the flexibly of parsing many types of data while perform data cleaning when data unexpectedly changes. 
+
+To read dataset using *readr* we will need combine two information: a function that parses the overall file and a column specification. Column specification describes how each column should be converted from a character vector to the most appropriate data type and in most cases it’s not necessary because readr will guess it for you automatically.
+
+*readr* supports 7 file formats of read_ functions:
+* read_csv(): Comma separated (CSV) files
+* read_tsv(): Tab separated files
+* read_delim(): General delimited files
+* read_fwf(): Fixed width files
+* read_table(): Tabular files where columns are separated by white-space.
+* read_log(): Web log files
+
+### tibble
+*tibble* as mentioned earlier it is another format with the modern re-imagining of the dataframe, keeping functions that was effective and removing the non-relevant functions. Tibbles dataframes tend to be lazy and surly where it do less and complain more, forcing users to resolve problems earlier. Along with the *print()* function, the *tibble* package helps in the easy handling of big datasets containing complex objects. Such features of *tibble* package enable users to treat the inherent data issues early on, hence producing cleaner code and data.
+
+Moreover, tibble is a type of dataframe in R that allow us to detect anomalies in our dataset. This is due to tibble having the property where it does not change variable names or types. Also,tibble doesn’t trigger errors when a variable does not exist or have missing value within the dataset.
+
+
+## Data Manipulation using Tidyverse collection
+
+### dplyr
+*dplyr* is one of the most commonly used packages in R for data manipulation. *dplyr* provides a grammar of data manipulation, providing a consistent set of verbs that solve the most common data manipulation challenges. The main advantages of *dplyr* is the ability to use the pipe function *%>%* to combine different functions in R. From filtering to grouping the data, *dplyr* R package is able to perform all.
+
+Following is a complete list of *dplyr* functions:
+* select(): Select columns required for the dataset
+* filter(): Filter out certain rows that meet the criteria(s)
+* group_by(): Group different observations together based on the defined conditions
+* summarise(): Summaries any of the above functions
+* arrange(): Arrange the column data in ascending/descending order
+* join(): Perform left, right, full, and inner joins in R
+* mutate(): Create new columns by preserving the existing variables
+
+The following is code that demonstrate the use of the *filter()* function of *dplyr* package using the dataset that we had imported earlier on, where we filter dataset that is only after year 2020. *as.Date()* function is being used together with *filter()* to convert input text to date data type object to allow the use in date related operation.
+
+```{r}
+stock_data_daily_new = stock_data_daily %>% 
+  filter(date >= as.Date("2020-01-01"))
+
+paged_table(stock_data_daily_new)
+```
+
+### tidyr
+*tidyr* R packages provides a set of functions that allow us to tidy data. Tidy data is where data is of consistent and standardized format. *tidyr* package is used together with *dplyr* packages where it help to boost the power of *dplyr* for data manipulation and pre-processing. Below is the list of functions tidyr offers:
+
+* gather(): “gathers” multiple columns from your dataset and converts them into key-value pairs
+* spread(): Take two columns and “spreads” them into multiple columns
+* separate(): Separating or splitting a single column into numerous columns
+* unite(): Combining two or more columns into one
+
+In this article, we would be using the *unite()* function to combine the daily high and low APPL price into the new column ('high_low') using the financial dataset that we had loaded and filter earlier on. Using this new column, we are able to analysis a closer comparison between the lowest APPLE share price against its highest price of that particular day.
+
+```{r}
+stock_data_daily_new = stock_data_daily_new %>% 
+  unite("high_low",high:low,remove = FALSE)
+
+paged_table(stock_data_daily_new)
+```
+
+### stringr
+*stringr* packages has a comprehensive set of functions that is designed to allow the ease for string manipulation. *stringr* contains a variety of functions that make working with string data really easy. It is built on top of *stringi* that uses ICU C library to allow a fast and correct implementations of common string manipulations. Strings usually contain unstructured or semi-structured data that would be useful for analysis after it had been transformed into an easily understandable format. 
+
+*stringr* focus on commonly used string manipulation functions whereas *stringi* provides a detail of functions that could be used in string manipulation. Both packages share similar conventions.Thus if there is missing function in *stringr*, we are to locate that missing function in *stringi*
+
+Following is some example of *stringr* functions:
+* str_sub(): Extract substrings from a character vector
+* str_trim():Trim white spaces
+* str_length(): Checks the length of the string
+* str_to_lower/str_to_upper: Converts the string into upper case or lower case
+
+### forcats
+The *forcats* package is mainly used for data manipulation with categorical variables or factors. With *forcats*, it allow a suite of useful tools to help solve common problems with factors such as categorical variables, where it consist of variables that contain a fixed and known set of possible values.Factors are also useful in the reordering of character vectors to improve display.Some functions that is within the *forcats* package include:
+
+* fct_reorder(): Reordering a factor by another variable.
+* fct_infreq(): Reordering a factor by the frequency of values.
+* fct_relevel(): Changing the order of a factor by hand.
+* fct_lump(): Collapsing the least/most frequent values of a factor into “other”.
+
+For user, it could be frustrating when working with categorical dataset due to having the possibility of having the format in the least expected structure. With tibble dataframe, this issue could be resolved as it had been pre-defined and it help to allow data wrangling to be perform for categorical dataset with minimum effort.
+
+Overall, with *tidyverse* it show how the different packages under the collection could ollaborated together and also with the ability of the package being utilized on its own. With *tidyverse* packages all sharing the same underlying philosophy and common APIs, it make it stand out from the rest.
+
+There are several advantages of using *tidyverse*, where firstly using *tidyverse* brings about consistency for variable,functions and dataset that follow a standardized patterns and syntex. The high level of consistency is further shown where we perform operation that could connect a sequence of base functions, command and operators into a tidy pipeline. Secondly,the usage of *tidyverse* help users to translate their workflow into a effective Data science process with an end to end process as shown.
+
+Lastly, the key strength of using *tidyverse* will be its ability to perform data manipulation productively. Where using the set of packages within *tidyverse*, user would be able to perform the end to end of data science workflow without the need for additional R packages.
+
+# Data Exploration
+
+Data exploration would be the second portion of the article as well as the next step of the analysis after we had transform the raw data into a systematic structural format. Exploratory data analysis (EDA) is where we use a set of tools to achieve a basic understanding of a dataset. The results of data exploration can be extremely useful in grasping the structure of the data, the distribution of the values, presence of extreme values and interrelationships within the dataset. EDA result tend to be presented in either statistics or graphical format.
+
+In this article we would look into the various R packages that is available under the *tidyverse* and *timetk* collection to look at how we could visualize our result from our data exploration graphically.
+
+## Data Vislization using Tidyverse collection
+
+### ggplot2
+*ggplot2* is a plotting package under the Tidyverse collection that create graphics, based on The Grammar of Graphics. Using the dataset provided, *ggplot2* is able to map variables to aesthetics, define what graphical primitives to use and look into details like axis label, title etc.
+
+ggplot2 makes it easier to create complex plots from wrangled dataset. It generate a much more programmatic interface that allow user to select which variables to plot, how the diagram are displayed and include the general visual properties as well. Thus, we would not need to make much changes if the underlying dataset change or if we decide to change from scatterplotto histogram. This helps in the development of quality plots without the need to make much adjustment.
+
+*ggplot2* tend to work best with data in the ‘long’ format (a column for every dimension, and a row for every observation). Hence, with a well-structured dataset *ggplot* graphics ia able to be built layer by layer by adding new elements. Adding layers in this fashion allows for extensive flexibility and customization of plots.
+
+To build a ggplot, following is a basic template that can be used for different types of plots, where data represent that dataset we are using, aes is the
+>ggplot(data = <DATA>, mapping = aes(<MAPPINGS>)) +  <GEOM_FUNCTION>())
+
+The following would be a code chunk example of how *ggplot2* is use to visualize the relationship of the daily volume rate of APPL share since 2020. Through this, we are able to observe that there is overall decreasing trend with significant fltuation in its volumne from Jan 2020 to May 2021.
+
+```{r}
+ggplot(data=stock_data_daily_new, aes(x = date ,y = volume)) +
+  geom_line(color = '#E51837', size = .8) +
+  labs(title = 'Volume of APPL shares per day from Jan 2020 to May 2021'
+       ,y = 'Volume'
+       ,x = 'Date'
+       ,subtitle = str_c("Apple stock volume overall decreases from Jan 2020 to May 2021 but with substantial volatility")
+       ) +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 26, color = '#333333')
+        ,plot.subtitle = element_text(size = 13)
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        )
+```
+
+## Data Vislization using timetk 
+
+### timetk
+With *ggplot2* being a more general approaching for plotting figure, it is able to cover a wide variety of plots ranging from density to bar plot. When working on data visualization that focus on time series data exploration, having the need to use multiple R packages such as *zoo, xts ,dplyr* etc is quite tedious. *timetk* is able to resolve this issue by having a consistent approach to visulize time series data analysis after preprocessing the time series data within the *tidyverse* ecosystem.
+
+With the development of R packages, the combination of *tidyverse* and time series bring about the effectiveness to perform time series analysis where we look into trend, relationship as well as historical data analysis of the stock market dataset. In the next section of the article we will be looking at how enhance feature *timetk* bring out the ease for plotting time series analysis for data exploration.
+
+Below is the code chunk that display the similar graphical plot (Daily volume rate of APPL share since 2020) as mentioned above using the *ggplot2* R packages. Compared to plot using *ggplot2*, the figure plotted using *timetk* allow much more interactive feature like the slider function that allow us to to filter the data observation based on the selected time period. Also, using *timetk* we are able to obtain graphical plot that allow user to hover the data point to locate the detail that user is looking out for. The various feature mentioned for *timetk* is plotted using the *plot_time_series()* function.
+
+```{r}
+stock_data_daily_new %>%
+  plot_time_series(date, volume, .interactive=TRUE, .plotly_slider=TRUE)
+```
+Another important function of *timetk* would be the easiness to perform anomaly detection. Anomaly detection is where we identify data point that has unusual high/low value within the dataset. In other words, that data point is different from the rest.
+
+In *timetk*, we are able to identify anomaly detection visualization using *plot_anomaly_diagnostics()* function and to split the dataset by year. The result of the code is shown as following where we are identify the anomaly detection for the daily volume rate of APPL share since 2020.
+
+```{r}
+stock_data_daily_new %>%
+  plot_anomaly_diagnostics(date, volume, .interactive=TRUE)
+```
+Overall, with *timetk* we are able to perform time series analysis much effectively. This is especially so with the different interactive function that allow data filtering, data selection and outlier detection to be much simpler. With the build-in function, user is able to spend more time on time series analysis instead of data transformation or building graphical function to plot diagrams.
+
+# Conclusion
+
+Overall, the first section on data transformation had allow us to be able to identify the various function available within the collection of *tidyverse* collection package that ease the process of data manipulation. With the usage of data transformation using tibble dataframe we are able to see that perform data manipulation easily as compared to the traditional R dataframe. As time series dataset tend to contain large amount of datapoint, the easiness to conduct data transformation is very crucial in the time series analysis process.
+
+In the next section of the article, we looking into data exploration by looking a using *ggplot2* under the *tidyverse* collection and *timetk* to explore how data exploration is done using data visualization to identify trend, relationship and underlying historical dataset pattern. 
+
+Through this, we are able to observe that *timetk* is and very powerful R packages and that *timetk* works well on its own without the need for *tidyverse* collection for both time series data exploration and data manipulation. With *timetk*, user is able to easily use the slider function to select the time period they wanted, understand correlation of data point movement of different time period and using anomaly detection function to filter out outliers within the dataset.
+
+# Reference
+
+* what is r. Home. (n.d.). https://mran.microsoft.com/documents/what-is-r. 
+* Tidyverse packages. Tidyverse. (n.d.). https://www.tidyverse.org/packages/. 
+* Easily Install and Load the Tidyverse. Easily Install and Load the Tidyverse • tidyverse. (n.d.). https://tidyverse.tidyverse.org/. 
+* Grolemund, H. W. and G. (n.d.). R for Data Science. 10 Tibbles | R for Data Science. https://r4ds.had.co.nz/tibbles.html. 
+* Michael Steinbaugh, M. P. (2017, October 20). Tidyverse data wrangling. Introduction to R - ARCHIVED. https://hbctraining.github.io/Intro-to-R/lessons/tidyverse_data_wrangling.html. 
+* Team, Analytics Vidhya Content. 2019. A Beginner’s Guide to Tidyverse - the Most Powerful Collection of R Packages for Data Science. Analytics Vidhya. https://www.analyticsvidhya.com/blog/2019/05/beginner-guide-tidyverse-most-powerful-collection-r-packages-data-science/.
+* Glanz, Hunter. 2019. What Is the Tidyverse? Teach Data Science. https://teachdatascience.com/tidyverse/.
+* Reinstein, Ian. 2017. An Opinionated Data Science Toolbox in R from Hadley Wickham, Tidyverse. KDnuggets. https://www.kdnuggets.com/2017/10/tidyverse-powerful-r-toolbox.html.
+* Rickert, Joseph. 2017. What Is the Tidyverse? R Views. https://rviews.rstudio.com/2017/06/08/what-is-the-tidyverse/.
+* Stanley, Joey. 2017. An Introduction to Tidyverse. University of Georgia.
+http://joeystanley.com/downloads/171110-tidyverse_handout.pdf.
+* NGO, H. A. (n.d.). Tidyverse in R (Part 1): An Overview. RPubs. https://rpubs.com/hoanganhngo610/553547. 
+* A Grammar of Data Manipulation. A Grammar of Data Manipulation • dplyr. (n.d.). https://dplyr.tidyverse.org/. 
+* Nishida, K. (2016, March 16). Filter with Date data. Medium. https://blog.exploratory.io/filter-with-date-function-ce8e84be680. 
+* Tidy Messy Data. Tidy Messy Data • tidyr. (n.d.). https://tidyr.tidyverse.org/. 
+* Unite multiple columns into one by pasting strings together - unite. - unite • tidyr. (n.d.). https://tidyr.tidyverse.org/reference/unite.html. 
+* Simple, Consistent Wrappers for Common String Operations. Simple, Consistent Wrappers for Common String Operations • stringr. (n.d.). https://stringr.tidyverse.org/. 
+* Tools for Working with Categorical Variables (Factors). Tools for Working with Categorical Variables (Factors) • forcats. (n.d.). https://forcats.tidyverse.org/. 
+* Read Rectangular Text Data. Read Rectangular Text Data • readr. (n.d.). https://readr.tidyverse.org/. 
+* Simple Data Frames. Simple Data Frames • tibble. (n.d.). https://tibble.tidyverse.org/. 
+* Team, Analytics Vidhya Content. 2016. A Comprehensive Guide to Data Exploration. Analytics Vidhya. https://www.analyticsvidhya.com/blog/2016/01/guide-data-exploration/
+* Create Elegant Data Visualisations Using the Grammar of Graphics. Create Elegant Data Visualisations Using the Grammar of Graphics • ggplot2. (n.d.). https://ggplot2.tidyverse.org/. 
+* Connect observations - geom_path. - geom_path • ggplot2. (n.d.). https://ggplot2.tidyverse.org/reference/geom_path.html. 
+* Science, B. (2020, June 5). (JUST RELEASED) timetk 2.0.0: Visualize Time Series Data in 1-Line of Code: R-bloggers. R. https://www.r-bloggers.com/2020/06/just-released-timetk-2-0-0-visualize-time-series-data-in-1-line-of-code/. 
+* Time Series Machine Learning. • timetk. (n.d.). https://business-science.github.io/timetk/articles/TK03_Forecasting_Using_Time_Series_Signature.html. 
+* Khalid, I. A. (2021, May 19). Timetk: The R Library for Time Series Analysis. Medium. https://towardsdatascience.com/timetk-the-r-library-for-time-series-analysis-9822f7720318. 

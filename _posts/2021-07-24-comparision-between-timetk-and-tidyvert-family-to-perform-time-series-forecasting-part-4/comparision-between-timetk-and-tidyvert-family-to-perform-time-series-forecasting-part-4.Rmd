@@ -1,0 +1,478 @@
+---
+title: "Comparision between timetk and tidyvert family-Part 4"
+description: |
+  Showcase and reviewing the different tools and technique within the tidyvert and timetk collection that allow user to be able to perform time series forecasting
+author:
+  - name: Ginice Seah
+    url: https://www.linkedin.com/in/giniceseah/
+date: 07-24-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.width=10,fig.height =5)
+```
+
+# Introduction
+
+As mentioned in my earlier post [part 3], in this article we will be continuing our reviewing the current techniques used by *timetk* collection on how time series forecasting is conducted. As compared to previous two post which mainly focus on data transformation and feature engineering. After which, we will also be reviewing the ability to perform machine learning modelto be perform by *timetk* collection.
+
+The objective of the article will be at be conducting an overall comparison analysis to look at how the different collection work for time series forecasting using the targeted dataset.
+
+# Setting up environment
+
+We would first start with setting up the environment and installation of the packages required for time series forecasting using R. To ensure that we had cleared the environment to perform data manipulation, we would remove prior R object using the code below
+
+```{r}
+rm(list=ls())
+```
+
+Next, we would run the following code chunk to validate if the required packages are installed. In the event that the packages are not installed, the code will install the missing packages. Afterwhich, the code would read the required package library onto the current environment.
+
+```{r}
+packages = c('dplyr','tidyverse','tidymodels','tidyquant','earth','timetk','recipes'
+             ,'modeltime','stats','data.table','ggplot2','plotly'
+             ,'rmarkdown','knitr')
+for (p in packages) {
+  if(!require(p,character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+# Import dataset
+
+In this article, we will be using the same selected Asia Pacific airline stock price extracted from Yahoo Finance as the previous post to ensure data consistency. Similarly, dataset extraction is conducted using the *tidyquant* R packages where *tidyquant* provides a function *tq_get()* for directly loading data as mentioned in the previous article[insert link]. We will be query daily data for Singapore airline, Cathay pacific, Eva air, Japan airline and Garuda Indonesia airline stocks from year 2020 to 15 July 2021 and following will be the code chunk to perform data extraction togther with the data visulization of it.
+
+```{r}
+from_date = "2020-01-01"
+to_date = "2021-07-15"
+period_type = "days"  # "days"/ "weeks"/ "months"/ "years"
+stock_selected = c("C6L.SI","0293.HK","2618.TW","JAPSY","GIAA.JK")
+
+stock_data_daily = tq_get(stock_selected,
+               get = "stock.prices",
+               from = from_date,
+               to = to_date)%>%
+  mutate_if(is.numeric, round, digits = 2)%>%
+  distinct(symbol,date,adjusted, .keep_all = TRUE)
+
+head(stock_data_daily)
+```
+
+Note that the data had been transformed so that each stock begins at 100 and replot where it had been standardize to allow comparasion among the different Asia Pacific stock adjusted prices timeseries.
+
+```{r}
+stock_data_daily %>%
+  group_by(symbol) %>%
+  mutate(adjusted_edit = 100*adjusted/first(adjusted)) %>%
+  ggplot(aes(x = date, y = adjusted_edit, color=symbol)) +
+  geom_line(size = 1)+
+  labs(title = "Normalized adjusted stock prices of the selected Asia pacific airline") +
+  theme(text = element_text(color = "#444444", family = 'Helvetica Neue')
+        ,plot.title = element_text(size = 35, color = '#333333')
+        ,axis.title = element_text(size = 14, color = '#333333')
+        ,axis.title.y = element_text(angle = 0, vjust = .5)
+        ) +
+    theme_tq() + 
+    scale_color_tq()
+
+```
+
+# timetk
+
+*timetk* collection consist set of tools and functions that allow the ease of data visualization, wrangling, and feature engineering of time series data for forecasting and machine learning prediction. It had consolidates and extends time series functionality from various R packages including *dplyr*, *stats*, *xts*, *forecast*, *slider*, *padr*, *recipes*, and *rsample*.
+ 
+As mentioned earlier [insert part 2 link], *timetk* enable us perform data wrangling and feature engineering with the use of graphical visual that is interactive and easy for user to manipulate using its selection, filter etc functions. Using the selected airline stock market adjusted prices, we plot our a single time series of the different selected stock individually to allow us to evaluate on its trend,seasonality or cyclic pattern. 
+
+Also by having the individual plot being arranged side by side as a single plot, user are able to look for any correlation or relationship among the stock adjusted prices of the Asia pacific airline. The following code chunks would demostrate how with the use of *plot_time_series()* function within the *timetk* package allow the individual time series to be plotted with the help of *group_by()* function.
+
+From the diagram below, we are able to observe that for all of the select asia pacific airline adjusted share price there had been an sharp drop from Jan 2020 till July 2020 where the coronavirus pandemic was recorded to affect millions of people and that country border are all being closed. This was also the period where the aviation industry was suddenly impacted due to the closure of various countries boarder resulting in the shut of toursim industry.
+
+Also, for almost all of the selected Asia pacific airline, adjusted share price had been on a slowly and steady increase after July 2020 where the coronavirus pandemic had been much more stabilizes in the United states, Europe and Asia Pacific market. There was also the period where news of the coronavirus vaccination had close to success and could be ready for mass production soon. This indicates that the adjusted share price is greatly dependent on how the oronavirus pandemic had affected individual country. An example would be the [Indo airline] where around May 2021, there had been a second round of outbreak of the coronavirus pandemic due to the delta variant. This had further impacted the [Indo airline] adjusted share prices and resulted in another drop of the adjusted share price even thought it was increasing steady pior the second outbreak.
+
+```{r}
+stock_data_daily %>%
+  group_by(symbol) %>%
+  plot_time_series(date, adjusted, .facet_ncol = 2, .interactive = TRUE)
+```
+
+## Modeltime
+
+Let start by looking at one of the package of the *timetk* collection, *modeltime* where it is a form of time series forecasting framework for the use with the tidymodel ecosystem that allow the collaboration with the function and format use within the *timetk* collection. Models of time series forecasting that is applicable within the *modeltime* package include ARIMA, Exponential Smoothing as well as additional time series models from the *forecast* and *prophet* packages. 
+
+Advantage of *modeltime* allow the ability for user to unlocks time series models and machine learning in one framework. Following are the list of function and model available for time series forecasting within the *modeltime* package.
+
+* forecast: Use ARIMA, ETS, and more models coming (arima_reg(), arima_boost(), & exp_smoothing()).
+* prophet: Use Facebook’s Prophet algorithm (prophet_reg() & prophet_boost())
+* tidymodels: Use any parsnip model: rand_forest(), boost_tree(), linear_reg(), mars(), svm_rbf() to forecas
+
+Let say if we are planning to decide if now is the right time to purchase Singapore airline stock, we would need understand how the Singapore airline stock price will be like for the next 12 month to make a better informed decision. With the use of *modeltime* we are able to perform forecasting of adjusted share price. To start of, we will first filter our main dataset to Singapore airline stock only. The code below would demonstrate the plot of a single time series of the Singapore airline adjusted price from 1 January 2020 to 15 July 2021.
+
+```{r}
+Sq_stock = stock_data_daily %>%
+  filter(
+    symbol == 'C6L.SI',
+    volume > 0
+  )
+
+Sq_stock %>%
+  plot_time_series(date, adjusted, .interactive = TRUE, .plotly_slider=FALSE)
+```
+
+After which we will split the dataset into train and test dataset using the *initial_time_split()*  function to create a train and test set. The ratio of spliting the dataset is 80:20 where 80% of the data points falls within the train dataset while 20% of the data points falls within the test dataset.
+
+```{r}
+# Split Data 80/20
+splits = initial_time_split(Sq_stock, prop = 0.8)
+```
+
+Using a combination of *modeltime* and *parsnip* we are able to create serveral forecasting model to identify which is the right model for our Singapore airline share price dataset. The usual model that user would test includes ARIMA, exponential smoothing, linear regression as well as multivariate adaptive regression splines (MARS). In the following section of the article, we will be looking at the various model that could be generated using the *modeltime* package and how the Singapore airline share price could be forecast using the different model.
+
+Notes in the difference between modeltime and parsnip model:
+
+* Modeltime models (arima_reg()) are formualated with date/date ime feature in the model. Most models include a formula like fit(value ~ date, data).
+
+* Parsnip models (linear_reg()) typically should not have date features, but may contain derivatives of dates (month, year, etc). Most models include a formula like fit(value ~ as.numeric(date) + month(date), data).
+
+
+### Model 1: Auto ARIMA 
+
+Firstly, we will start with the computation of a basic univariate ARIMA model using Auto Arima with the use of the *arima_reg()* function within the *modeltime* package
+
+```{r}
+model_fit_arima_no_boost = arima_reg() %>%
+    set_engine(engine = "auto_arima") %>%
+    fit(adjusted ~ date, data = training(splits))
+
+model_fit_arima_no_boost
+```
+
+### Model 2: Boosted Auto ARIMA 
+Next, we are able to create a boosted ARIMA using *arima_boost()* function. Boosting is where we would using XGBoost to model the ARIMA errors. As the model formula contains both a date feature and derivatives of date, ARIMA uses the date whereas the XGBoost uses the derivatives of date as regressors.
+
+```{r}
+model_fit_arima_boosted = arima_boost(
+    min_n = 2,
+    learn_rate = 0.015
+) %>%
+    set_engine(engine = "auto_arima_xgboost") %>%
+    fit(adjusted ~ date + as.numeric(date),
+        data = training(splits))
+
+model_fit_arima_boosted
+```
+
+### Model 3: Exponential Smoothing 
+We are also able to create an Error-Trend-Season (ETS) model using an Exponential Smoothing State Space model. This is performed using the *exp_smoothing()* within the *modeltime* R packages.
+
+```{r}
+model_fit_ets = exp_smoothing() %>%
+    set_engine(engine = "ets") %>%
+    fit(adjusted ~ date, data = training(splits))
+
+model_fit_ets
+```
+
+### Model 4: Prophet 
+Prophet model can also be created using *prophet_reg()*.
+
+```{r eval=FALSE}
+model_fit_prophet = prophet_reg() %>%
+    set_engine(engine = "prophet") %>%
+    fit(adjusted ~ date, data = training(splits))
+
+model_fit_prophet
+```
+
+### Model 5: Linear Regression
+Model time series linear regression (TSLM) using the *linear_reg()* algorithm from parsnip. The following derivatives of date are used:
+
+* Trend: Modeled using as.numeric(date)
+* Seasonal: Modeled using month(date)
+
+```{r}
+model_fit_lm = linear_reg() %>%
+    set_engine("lm") %>%
+    fit(adjusted ~ as.numeric(date),
+        data = training(splits))
+
+model_fit_lm
+```
+
+### Model 6: MARS (Workflow)
+Multivariate Adaptive Regression Spline model can also be compuatated using *mars()* function. We are able to use a workflow to standardize the preprocessing of the features that are provided to the machine learning model.
+
+```{r}
+model_spec_mars = mars(mode = "regression") %>%
+    set_engine("earth") 
+
+recipe_spec = recipe(adjusted ~ date, data = training(splits)) %>%
+    step_date(date, features = "month", ordinal = FALSE) %>%
+    step_mutate(date_num = as.numeric(date)) %>%
+    step_normalize(date_num) %>%
+    step_rm(date)
+  
+model_fit_mars = workflow() %>%
+    add_recipe(recipe_spec) %>%
+    add_model(model_spec_mars) %>%
+    fit(training(splits))
+
+model_fit_mars
+```
+
+From the 6 model generated above, these show how with *modeltime* we are able to test several time series model for the same dataset easily without the need to generate/create function for each of the time series model.
+
+After the creation and computation of the various time series model, we would then add each of the models to a Modeltime Table using *modeltime_table()*.This allow us to compare and organizes the model that we had used earlier for the time series forecasting of the Singapore airline share prices. 
+
+In this article we will adding 6 model into the modeltime table, do note that some of the models have tuning parameters.The assumption of the modeltime table would be that tuning and parameter selection is performed prior to incorporating into a Modeltime Table.
+
+In the event where we add an unfitted model, the *modeltime_table()* will trigger an error and indicate that there is a need to fit() the model.
+
+```{r}
+models_sq_stock = modeltime_table(
+    model_fit_arima_no_boost,
+    model_fit_arima_boosted,
+    model_fit_ets,
+    #model_fit_prophet,
+    model_fit_lm,
+    model_fit_mars
+)
+
+models_sq_stock
+```
+
+After we had model the dataset for time series forecasting, we would then calibrate the model into the test set. Using *modeltime_calibrate()* function in the *modeltime* package, it would adds a new column (.calibration_data) that consist of test predictions and residuals. 
+
+Calibration is performed for validation of the time series model and to look at the confidence intervals as well as accuracy metrics. It is usually used for forecasting predictions and residuals that are calculated from out-of-sample data.
+
+```{r}
+calibration_sq_stock = models_sq_stock %>%
+    modeltime_calibrate(new_data = testing(splits))
+
+calibration_sq_stock
+```
+
+Using *modeltime_forecast()* and *plot_modeltime_forecast()*, we are able to plot out the forecast data point of the 6 time series model that we had modeled earlier on. The code chunk below how demostrate how the interactive graphical plot could be plotted for us to analysis the result of the modeled time series forecasting of the Singapore airline adjusted share prices.
+
+```{r}
+calibration_sq_stock %>%
+    modeltime_forecast(
+        new_data    = testing(splits),
+        actual_data = Sq_stock
+    ) %>%
+    plot_modeltime_forecast(
+      .legend_max_width = 35, 
+      .interactive      = FALSE,
+      .plotly_slider=FALSE
+    )
+```
+
+From diagram above where it visualize the test set forecast, we are able to observe the following:
+
+* Models 1 and 2: ARIMA & ARIMA Boost is not performing relatively well. Both models have the auto components due to the use of Auto ARIMA. The XGBoost component has parameters that are much more specified. Better accuracy result could be computed using tuning, hence futher enhancement could be work on for the ARIMA & ARIMA Boost model.
+* Model 3: ETS(M,N,N) is performing the best. The 80% confidence interval is the most narrow where it indicate that the hold out set is modeled well.
+* Model 4: LM is over-shooting the local trend. As the trend component is a simple linear line, it does not account for the change points.
+* Model 5: EARTH is overfitting the local trend. This is due to not tuning the number of change points, so the algorithm is auto-calculating the change points.
+
+Other than the interactive plotly visualization of the test set forecast, we are also able to use *modeltime_accuracy()* to generate the test forecast accuracy metrics. The accuracy metrics that could be calculated are as following:
+
+* MAE - Mean absolute error using *mae()*
+* MAPE - Mean absolute percentage error using *mape()*
+* MASE - Mean absolute scaled error using *mase()*
+* SMAPE - Symmetric mean absolute percentage error using *smape()*
+* RMSE - Root mean squared error using *rmse()*
+* RSQ - R-squared using *rsq()*
+
+Using the code below, we are able to generate a summarizes table of the accuracy metrics to look and compare which model is much more suitable for the Singapore airline adjusted share prices. Also from the table below, we are able to see that the ETS model is the most suitable time series forecasting model for the forecast of the Singapore airline share prices as it has the lowest MAE value as compare to the rest of the time series model.
+
+```{r}
+calibration_sq_stock %>%
+    modeltime_accuracy() %>%
+    table_modeltime_accuracy(
+        .interactive = TRUE
+    )
+```
+
+Lastly, we would then refit the models to the full dataset using *modeltime_refit()* and forecast them forward.
+
+```{r}
+refit_sq_stock = calibration_sq_stock %>%
+    modeltime_refit(data = Sq_stock)
+
+refit_sq_stock %>%
+    modeltime_forecast(h = "5 years", actual_data = Sq_stock) %>%
+    plot_modeltime_forecast(
+      .legend_max_width = 55, 
+      .interactive = TRUE,
+      .plotly_slider=FALSE
+    )
+```
+
+After refitting, we noticed that all of the time series models have all changed. The EARTH model has a trend that is more representative of the near-term trend where it is within the 80% confidence level as well.The PROPHET model has a trend that is very similar to the EARTH model and this is due to both modeling algorithms use changepoints to model trend.
+
+Refitting do have its advantages like how it it able to retrieves time series forecast model and preprocessing steps, help to refits the model for new data as well as perform recalculation of automations like the long-term trend for Linear Model,change points for the Earth Model and ARIMA and ETS parameters.
+
+## Autoregressive Forecasting with Recursive
+
+Other than the typical time serie modeling forecasting, *modeltime* package allow as to turn tidymodel into an Autoregressive Forecasting Model. When using a recursive model for predictions,it allow us to generate new values for independent features. These features are typically lags used in the autoregressive models.
+
+When the lag length is less than the forecast horizon, there is issue lies with the missing data points generated in the future data.
+
+Using *recursive()* allow the missing values to be filled in with values generated from predictions. This is effective in single time series predictions and panel time series predictions. Panel time series prediction is where we forecast more than one time series using batch-process with 1 model and by processing time series groups as panels.
+
+Similarly as before, we will be using the same set Singapore airline share price from 1 January 2020 to 15 July 2021. And in the following code below we will be demonstrating the same single time series plot.
+
+```{r}
+Sq_stock = Sq_stock %>% drop_na()
+
+Sq_stock%>% 
+  plot_time_series(
+    .date_var    = date, 
+    .value       = adjusted, 
+    .facet_var   = symbol, 
+    .smooth      = FALSE, 
+    .interactive = FALSE
+  )
+```
+To begin computation of the recursive forecast model, we would first need to establish a forecast horizon and extend the dataset to create a forecast region as recursive forecast model is the forecasting of short-term lags (Lag Size < Forecast Horizon). The code below would demonstrate how the data preparation is conducted.
+
+```{r}
+FORECAST_HORIZON = 24
+
+Sq_stock_extended = Sq_stock %>%
+    future_frame(
+        .length_out = FORECAST_HORIZON,
+        .bind_data  = TRUE
+    ) %>%
+    ungroup()
+
+head(Sq_stock_extended)
+```
+
+After the dataset had been transformed to create a forecast region, we will then use short-term lags (lags with a size that are smaller than the forecast horizon) to create and apply this function *lag_roll_transformer()* that adds lags 1 through 12 and a rolling mean using lag 12 of the dataset. With each of the features used in this function having lags less than the forecast horizon of 24 months, thus there is need to use *recursive()*. We would also then apply the *lag_roll_transformer()* to the extended dataset to have a look at its impact on the dataset.
+
+```{r}
+lag_roll_transformer = function(data){
+    data %>%
+        tk_augment_lags(adjusted, .lags = 1:FORECAST_HORIZON) %>%
+        tk_augment_slidify(
+          contains("lag12"),
+          .f = ~mean(.x, na.rm = T),
+          .period  = 12,
+          .partial = TRUE
+        ) 
+}
+
+Sq_rolling = Sq_stock_extended %>%
+    lag_roll_transformer() 
+
+head(Sq_rolling)
+```
+Next we will split the dataset into training and testing dataset before we begin our time series modeling using the autoregressive algorithm. Train dataset would be where all the value are filled in the dataset while test dataset contain missing adjusted share prices that would be predicted by the autoregressive algorithm.
+
+```{r}
+train_data = Sq_rolling %>%
+    drop_na()
+test_data = Sq_rolling %>%
+    filter(is.na(adjusted))
+```
+
+### Model 1: Straight-Line Forecast Model
+
+We will first start modeling the time series prediction using a simple linear regression with only one feature (date).
+
+```{r eval=FALSE,echo=TRUE}
+model_fit_lm = linear_reg() %>%
+    set_engine("lm") %>%
+    fit(adjusted ~ date, data = train_data)
+
+model_fit_lm
+```
+
+### Model 2: Autoregressive Forecast Model
+
+The autoregressive forecast model is simply a parsnip model with the use of *recursive()*. 
+
+The key components would be transform and train_tail. Where transform would be the transformation function that we had created previously to generated Lags 1 to 12 and the Rolling Mean Lag 12 features. Whereas the train tail would be the tail of the training data that need to be as large as the lags used in the transform function (lag 12 in this case). Train tail could be generated using the *panel_tail()* function for panel data
+
+The following code below would demostrate how the Autoregressive Forecast Model be generated with the use of the *recursive()*, *lag_roll_transformer* and *panel_tail()* functions
+
+```{r eval=FALSE,echo=TRUE}
+model_fit_lm_recursive = linear_reg() %>%
+    set_engine("lm") %>%
+    fit(adjusted ~ ., data = train_data) %>%
+    recursive(
+        transform  = lag_roll_transformer,
+        train_tail = tail(train_data, FORECAST_HORIZON)
+    )
+
+model_fit_lm_recursive
+```
+
+Similar as before once we have fitted the model, we are able to use the *modeltime_table()* to organize our fiited model and use it to perform forecasting as well as for forecast evaluation using *modeltime_forecast()* and *plot_modeltime_forecast()*.
+
+```{r eval=FALSE,echo=TRUE}
+model_table = modeltime_table(
+    model_fit_lm,
+    model_fit_lm_recursive
+) 
+model_table
+```
+
+```{r eval=FALSE,echo=TRUE}
+model_table %>% 
+    # Forecast using future data
+    modeltime_forecast(
+        new_data    = test_data,
+        actual_data = Sq_stock
+    ) %>%
+    # Visualize the forecast
+    plot_modeltime_forecast(
+        .interactive        = FALSE,
+        .conf_interval_show = FALSE
+    )
+```
+
+Other than the single time series conducted for the recursive forecasting we are also able to use the same tool and methodology for Panel model. The main different between Recursive Forecast Model and Recursive Forecasting with Panel Models would be where we created grouped transformation functions instead of transformation functions (takes a dataset and adds lags 1 through 12 and a rolling mean using lag 12).
+
+# Conclusion
+
+Overall, the *modeltime* package within the *timetk* collection is a very convient tops that allow the time series forecasting to be perform not only on the classic time series model but also on the machine learning algothrim like the linear regression, gradient boast as well. It allow the integrated of traditional methodology of time series forecasting and the commonly use machine learning method into one framework. 
+
+With a greater variety of models for user to select we are able to test various modeling technique based on the dataset we have as well as the objective that we would like to affect. Nowadays, time series forecasting it no long just looking at a single time series, it is also looking into other external factor/variable that might affect our time series prediction. With *modeltime*, it brings about that advantges
+
+Furthermore, as mentioned in all our earlier post where *timetk* collection do have that easy access of slider, hoving of data points to enable user to be able to analysis and manipulate the forecast data point much more effectively and much more business orientated.
+
+# Reference
+
+* Athiyarath, S., Paul, M., &amp; Krishnaswamy, S. (2020). A Comparative Study and Analysis of Time Series Forecasting Techniques. SN Computer Science, 1(3). https://doi.org/10.1007/s42979-020-00180-5 
+* Burba, D. (2020, November 24). An overview of time series forecasting models. Medium. https://towardsdatascience.com/an-overview-of-time-series-forecasting-models-a2fa7a358fcb. 
+* Business-Science.io. (2017, October 24). Demo Week: Time Series Machine Learning with timetk. * Business Science. https://www.business-science.io/code-tools/2017/10/24/demo_week_timetk.html.
+* Business-Science.io. (2020, June 29). Introducing Modeltime: Tidy Time Series Forecasting using Tidymodels. Business Science. https://www.business-science.io/code-tools/2020/06/29/introducing-modeltime.html. 
+* Comprehensive R Archive Network (CRAN). (2020, October 2). Interactive Graphics for Tsibble Objects [R package tsibbletalk version 0.1.0]. The Comprehensive R Archive Network. https://cran.r-project.org/web/packages/tsibbletalk/index.html. 
+* Dancho, M. (2017, July 25). Forecasting Using a Time Series Signature with timetk. http://cran.nexr.com/web/packages/timetk/vignettes/TK03_Forecasting_Using_Time_Series_Signature.html. 
+* Dingli, A., &amp; Fournier, K. S. (2017). Financial Time Series Forecasting – A Deep Learning Approach. International Journal of Machine Learning and Computing, 7(5), 118–122. https://doi.org/10.18178/ijmlc.2017.7.5.632 
+* Drop rows containing missing values - drop_na. - drop_na • tidyr. (n.d.). https://tidyr.tidyverse.org/reference/drop_na.html. 
+* E. E. Holmes, M. D. S. (2021, March 1). Applied Time Series Analysis for Fisheries and Environmental Sciences. 4.1 Time series plots. https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-time-series-plots.html. 
+* E. E. Holmes, M. D. S. (2021, March 1). Applied Time Series Analysis for Fisheries and Environmental Sciences. 4.9 Autoregressive moving-average (ARMA) models. https://nwfsc-timeseries.github.io/atsa-labs/sec-tslab-autoregressive-moving-average-arma-models.html. 
+* Forecasting Models for Tidy Time Series. Forecasting Models for Tidy Time Series •. (n.d.). https://fable.tidyverts.org/. 
+* Forecasting: Principles&nbsp;and&nbsp;Practice (3rd ed). 5.2 Some simple forecasting methods. (n.d.). https://otexts.com/fpp3/simple-methods.html. 
+* Gorakala, suresh kumar. (2015, December 26). Time Series Analysis using R – forecast package: R-bloggers. R. https://www.r-bloggers.com/2014/04/time-series-analysis-using-r-forecast-package/. 
+* Guerard, J. B. (2012). An Introduction to Time Series Modeling and Forecasting. Introduction to Financial Forecasting in Investment Analysis, 47–72. https://doi.org/10.1007/978-1-4614-5239-3_3 
+* Hyndman, R. on R. J. (2019, September 29). Tidy forecasting in R: R-bloggers. R. https://www.r-bloggers.com/2019/09/tidy-forecasting-in-r/. 
+* Lesson 1 Welcome to Shiny. Shiny. (n.d.). https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/. 
+* McLeod, A. I., Yu, H., &amp; Mahdi, E. (2012). Time Series Analysis with R. Time Series Analysis: Methods and Applications, 661–712. https://doi.org/10.1016/b978-0-444-53858-1.00023-5 
+* plot.ts: Plotting Time-Series Objects. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/plot.ts. 
+* plot: Generic X-Y Plotting. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/plot. 
+* Science, B. (2020, August 19). Time Series in 5-Minutes, Part 1: Data Wrangling and Rolling * Calculations: R-bloggers. R. https://www.r-bloggers.com/2020/08/time-series-in-5-minutes-part-1-data-wrangling-and-rolling-calculations/. 
+* Science, B. (2020, November 24). Forecasting Time Series ARIMA Models (10 Must-Know Tidyverse Functions #5): R-bloggers. R. https://www.r-bloggers.com/2020/11/forecasting-time-series-arima-models-10-must-know-tidyverse-functions-5/. 
+* The Tidymodels Extension for Time Series Modeling. The Tidymodels Extension for Time Series Modeling •. (n.d.). https://business-science.github.io/modeltime/. 
+* Time Series Machine Learning. • timetk. (n.d.). https://business-science.github.io/timetk/articles/TK03_Forecasting_Using_Time_Series_Signature.html. 
+* TrenchForecast: Minimum Mean Square Forecast. RDocumentation. (n.d.). https://www.rdocumentation.org/packages/ltsa/versions/1.4.6/topics/TrenchForecast. 
+* tsibbletalk. README. (n.d.). https://cran.r-project.org/web/packages/tsibbletalk/readme/README.html. 
+* Zach Bogart, J. R. (2021, March 27). edav.info/. 21 Stock data with tidyquant. https://edav.info/tidyquant.html. 

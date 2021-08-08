@@ -2,4 +2,7 @@
 title: "Capstone Journey"
 site: distill::distill_website
 listing: posts
+categories:
+  -forecasting
+  -UI design
 ---
