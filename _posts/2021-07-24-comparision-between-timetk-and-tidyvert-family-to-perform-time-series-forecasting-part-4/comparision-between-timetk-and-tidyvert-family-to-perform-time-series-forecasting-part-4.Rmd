@@ -98,8 +98,25 @@ Also, for almost all of the selected Asia pacific airline, adjusted share price 
 ```{r}
 stock_data_daily %>%
   group_by(symbol) %>%
-  plot_time_series(date, adjusted, .facet_ncol = 2, .interactive = TRUE)
+  plot_time_series(date, adjusted, .facet_ncol = 2, .title = "Selected Asia Pacific Airline stock price",.interactive = TRUE)
 ```
+
+```{r}
+Sq_stock = stock_data_daily %>%
+  filter(
+    symbol == 'C6L.SI',
+    volume > 0
+  )
+
+Sq_stock %>%
+    plot_seasonal_diagnostics(date, adjusted, .title = "Seasonal Diagnostics of Singapore Airline stock price",.interactive = FALSE)
+```
+
+```{r}
+Sq_stock %>%
+  plot_anomaly_diagnostics(date, adjusted, .interactive=TRUE)
+```
+
 
 ## Modeltime
 
@@ -121,7 +138,7 @@ Sq_stock = stock_data_daily %>%
   )
 
 Sq_stock %>%
-  plot_time_series(date, adjusted, .interactive = TRUE, .plotly_slider=FALSE)
+  plot_time_series(date, adjusted, .title = "Time series plot of adjusted Singapore Airline stock price",.interactive = TRUE, .plotly_slider=TRUE)
 ```
 
 After which we will split the dataset into train and test dataset using the *initial_time_split()*  function to create a train and test set. The ratio of spliting the dataset is 80:20 where 80% of the data points falls within the train dataset while 20% of the data points falls within the test dataset.
