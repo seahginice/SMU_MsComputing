@@ -294,7 +294,8 @@ Using the code below, we are able to generate a summarizes table of the accuracy
 calibration_sq_stock %>%
     modeltime_accuracy() %>%
     table_modeltime_accuracy(
-        .interactive = TRUE
+        .interactive = FALSE
+        
     )
 ```
 
@@ -308,7 +309,7 @@ refit_sq_stock %>%
     modeltime_forecast(h = "5 years", actual_data = Sq_stock) %>%
     plot_modeltime_forecast(
       .legend_max_width = 55, 
-      .interactive = TRUE,
+      .interactive = FALSE,
       .plotly_slider=FALSE
     )
 ```
