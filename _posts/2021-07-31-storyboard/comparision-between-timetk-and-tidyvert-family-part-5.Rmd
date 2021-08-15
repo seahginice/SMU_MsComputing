@@ -18,9 +18,9 @@ knitr::opts_chunk$set(echo = TRUE, eval=TRUE, message=FALSE,warning=FALSE,fig.wi
 
 # Introduction
 
-Stock market is full of uncertainty and high level of volatiity due to demand and supply from current market. As such, forecasting for stock price very crucial and important in finance and business industry. For stockbrokers/trader, understanding trends and seasonality with the support of the prediction forecasting is very important for decision making. 
+Stock market is full of uncertainty and high level of volatility due to demand and supply from current market. As such, forecasting for stock price very crucial and important in finance and business industry. For stockbrokers/trader, understanding trends and seasonality with the support of the prediction forecasting is very important for decision making. 
 
-Hence, to be able to be equipped with these prediction functionality, there is a need for user to be able to visualize reall time stock prices with forecasting ability on on user-interface (UI) that allow user to be able to toggle with the dashboard to manipulate the dataset that requirement with build in ability for time series forecasting. In this article we will be proposing a time series forecasting web application that is build via Shiny application that have interactive features to allow user to cut and slices dataset based on their needs and requirement.
+Hence, to be able to be equipped with these prediction functionality, there is a need for user to be able to visualize real time stock prices with forecasting ability on on user-interface (UI) that allow user to be able to toggle with the dashboard to manipulate the dataset that requirement with build in ability for time series forecasting. In this article we will be proposing a time series forecasting web application that is build via Shiny application that have interactive features to allow user to cut and slices dataset based on their needs and requirement.
 
 # Motivation
 
@@ -40,11 +40,73 @@ To archive a real time prediction dashboard that allow user to be interactive ba
 2. Who is it for?
 3. When and how are we looking at it?
 
-Having an end goal in mind when building the dashboard application allow us to be able to understand and cater to user needs and persective. This would overall boost the result of our usabilty evaluation after the intial draft of the dashboard application had been build.
+Having an end goal in mind when building the dashboard application allow us to be able to understand and cater to user needs and perspective. This would overall boost the result of our usability evaluation after the initial draft of the dashboard application had been build.
 
 # Storyboard
 
+Currently, the web application is developed into three main section. The first section will consist of a homepage tab that allow user to select multiple stock index to look, review and compare the various time series timeline that user is interested in. Through this the user is able to obtain a basic understanding on the various stock prices trend line, seasonal and cyclic pattern giving them the overall feel on how the stock prices had been historical or the selected time period.
+
+Under the second section of the application, it would the data exploration tab where user is able to perform detail analysis of individual stock by looking at ACF, PACF, anomaly detection etc.
+
+Lastly, the third section of the dashboard application would be on forecasting of selected stock price using classic time series model as well as machine learning algorithm like regression analysis. In this section, users should be allowed to compare the result of different prediction models and view the characteristics of the time series data. Comparison result will also allow user to understand which time series forecasting model is suitable for their analysis.
+
+The initial proposed layouts and features of the sections are as follow together with its explanation and description on it:
+
+### Section one (Summary)
+
+![](img/Storyboard1.PNG)
+Figure 1: Proposed summary layout of the web application
+
+The figure below show some of the interactive features that will be plan in the development of the summary page of the dashboard application. The main objective of the summary page is to allow users to have been to have the overview and key indicator share prices of their selected stock.
+
+![](img/Storyboard4.PNG)
+
+### Section two (Data exploration analysis)
+
+![](img/Storyboard2.PNG) 
+Figure 2: Proposed data exploration to allow user to be able manipulate the data set according to their needs and requirement
+
+Over here in the data exploration section, user that selecr this tab would be able to filter and manipulation to perform deep analysis of a particular that there are interested in. From this tab, user is able to identify if the time series plot have any seasonality, trend or cyclic pattern to allow them to better that particular share market trend.
+
+![](img/Storyboard5.PNG)
+
+### Section three (Forecasting)
+
+![](img/Storyboard3.PNG) 
+Figure 3: Proposed layout for Time series forecasting
+
+In the third section of the web application, user would be able to select the type of model that they would like to use for time series forecasting.Model that are available includes both classic times series model and machines learning algorithm.
+
+Also, within the web application dashboard there is an accuracy metrics table to enable user to be to identify which model is much more suitable for their time series forecasting. This help user that are not very familar with time series to be able to make an informed choice as well. 
+
+![](img/Storyboard6.PNG)
+
+# Conclusion
+
+Overall, the aim of the article is to showcase some of the initial idea in the development of the web application that we are planning to build for the time series forecasting dasboard. The whole concept of this storyboard is to allow user with different needs to use this dashboard to perform both time series analysis as well as forecasting ability.
+
+Additionally, the aim of the web application is to bring out the real time scrapping of dataset to enable user to obtain a real time dashboard for the analysis. Having a real time analysis dashboard brings about the competitive advantages for user to be able to effective identify trend and pattern efficiently. Hence, enhancing the whole user experiences.
+
+With the various filter such as selected period, select model used for time series forecasting. This bring about the personality touch that allow user to manipulate and evaluation their selected stock index based on their needs.
+
+
 # Reference
 
-* https://www.r-bloggers.com/2018/04/using-shiny-dashboards-for-financial-analysis/
-* https://towardsdatascience.com/how-to-use-r-shiny-for-eda-and-prediction-72e6ef842240
+* artstein2017. (2017, December 16). R shiny stock analysis: R-bloggers. R. https://www.r-bloggers.com/2017/12/r-shiny-stock-analysis/. 
+* Budiharto, W. (2021, March 11). Data science approach to stock prices forecasting in Indonesia During Covid-19 using Long short-term Memory (LSTM). Journal of Big Data. https://journalofbigdata.springeropen.com/articles/10.1186/s40537-021-00430-0. 
+* Cartaya, C. (2021, March 3). How to use R shiny for EDA and prediction. Medium. https://towardsdatascience.com/how-to-use-r-shiny-for-eda-and-prediction-72e6ef842240. 
+* Christensen, P. (2021, January 5). Monitoring stock performance made easy with r and shiny. Medium. https://towardsdatascience.com/monitoring-stock-performance-made-easy-with-r-and-shiny-b6ab5fb02085. 
+* Dingli, A., &amp; Fournier, K. S. (2017). Financial time SERIES forecasting - a machine learning approach. Machine Learning and Applications: An International Journal, 4(1/2/3), 11–27. https://doi.org/10.5121/mlaij.2017.4302 
+* How the state of Indiana uses R and Azure to FORECAST EMPLOYMENT. Revolutions. (n.d.). https://blog.revolutionanalytics.com/2016/12/state-of-indiana-employment.html. 
+* Jeffares, A. (2020, September 15). Supervised vs unsupervised learning in 2 minutes. Medium. https://towardsdatascience.com/supervised-vs-unsupervised-learning-in-2-minutes-72dad148f242. 
+* Jeffries, P. (2018, April 29). Using shiny dashboards for financial Analysis: R-bloggers. R. https://www.r-bloggers.com/2018/04/using-shiny-dashboards-for-financial-analysis/. 
+* Ltd, N. P. (2019, December 12). How machine learning can transform the financial forecasting process. Medium. https://medium.com/@neevista/how-machine-learning-can-transform-the-financial-forecasting-process-357bfd87c2ba. 
+* Malchevskiy, S. (2020, April 1). How to develop a stock market analytical tool using shiny and r. Medium. https://medium.com/@sermal/how-to-develop-a-stock-market-analytical-tool-using-shiny-and-r-c2385e0d2f89. 
+* New Zealand trade Intelligence dashboard. Shiny. (n.d.). https://shiny.rstudio.com/gallery/nz-trade-dash.html. 
+* Science, B. (2020, March 9). R shiny vs Tableau (3 business Application Examples): R-bloggers. R. https://www.r-bloggers.com/2020/03/r-shiny-vs-tableau-3-business-application-examples/. 
+* Shiny dashboard for stocks listed on s&amp;p500. DataCamp Community. (n.d.). https://www.datacamp.com/community/news/shiny-dashboard-for-stocks-listed-on-sandp500-g9f17jb63vf. 
+* Singh, W. (2021, July 12). The ultimate guide to storyboarding. iDashboards. https://www.idashboards.com/blog/2018/09/05/the-ultimate-guide-to-storyboarding/. 
+* Steininger, M. (2020, August 21). Predicting short-term stock movements with quantitative finance and machine learning in python. Medium. https://towardsdatascience.com/predicting-short-term-stock-movements-with-quantitative-finance-and-machine-learning-in-python-e6e04e3e0337. 
+* Views, R. (2017, April 21). A shiny app for importing and Forecasting commodities prices from Quandl. · R Views. https://rviews.rstudio.com/2017/04/21/a-shiny-app-for-importing-and-forecasting-commodities-prices-from-quandl/. 
+* Yahoo! (n.d.). Yahoo finance – stock Market Live, quotes, business &amp; finance news. Yahoo! Finance. https://sg.finance.yahoo.com/. 
+* Yang, Z. (2018, February 4). S&amp;P500 dashboard: R-BLOGGERS. R. https://www.r-bloggers.com/2018/02/sp500-dashboard/. 
