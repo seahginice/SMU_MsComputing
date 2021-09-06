@@ -280,10 +280,12 @@ Using *modeltime_forecast()* and *plot_modeltime_forecast()*, we are able to plo
 calibration_sq_stock %>%
     modeltime_forecast(
         new_data    = testing(splits),
-        actual_data = Sq_stock
+        actual_data = Sq_stock#,
+        #keep_data = TRUE
     ) %>%
     plot_modeltime_forecast(
       .legend_max_width = 35, 
+      .conf_interval_show = TRUE,
       .interactive      = FALSE,
       .plotly_slider=FALSE
     )
@@ -326,6 +328,7 @@ refit_sq_stock %>%
     modeltime_forecast(h = "5 years", actual_data = Sq_stock) %>%
     plot_modeltime_forecast(
       .legend_max_width = 55, 
+      .conf_interval_show = FALSE,
       .interactive = FALSE,
       .plotly_slider=FALSE
     )
