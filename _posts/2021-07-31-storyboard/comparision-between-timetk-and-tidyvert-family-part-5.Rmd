@@ -61,7 +61,9 @@ The figure below show some of the interactive features that will be plan in the 
 
 ![](img/Storyboard4_v2.PNG)
 
-Also, upload and export button is only included to allow user have the ability and flexibility to import data and export data from the time series forecasting dashboard. Having the upload feature, allow user to not be restricted in the type of data that could be used for this web application. Whereas having the export button function allow the analysis and forecasted result to be export in data or report format that enable to use their finalized analysis immediately.
+Also, upload and export button is only included to allow user have the ability and flexibility to import data and export data of a fixed format from the time series forecasting dashboard. Having the upload feature, allow user to not have to undergo data transformation to perform time series analysis and time series forecasting and that with the upload of the data of a fixed format it could be used for this web application. This feature of auto data transformation is feasible with the used of ready available R packages using the *tidyvert* and *timetk* collection to convert dataframe into tsibble data format.
+
+Whereas having the export button function allow the analysis and forecasted result to be export in data or report format that enable to use their finalized analysis immediately.
 
 ### Section two (Data exploration analysis)
 
